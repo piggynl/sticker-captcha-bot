@@ -34,22 +34,29 @@ func Get(k string) (string, error) {
 	res, err := Client.Get(bg, k).Result()
 	if err != nil {
 		if err != redis.Nil {
-			log.Warnf("redis.get(key=%q): err %v", k, err)
+			log.Warnf("redis.get(%q): err %v", k, err)
 		} else {
-			log.Tracef("redis.get(key=%q): ok %v", k, err)
+			log.Tracef("redis.get(%q): ok %v", k, err)
 		}
 	} else {
-		log.Tracef("redis.get(key=%q): ok %q", k, res)
+		p := res
+		if len(p) > 10 {
+			p = "(...)"
+		}
+		log.Tracef("redis.get(%q): ok %q", k, p)
 	}
 	return res, err
 }
 
 func Set(k string, v string, ttl time.Duration) (string, error) {
 	res, err := Client.Set(bg, k, v, ttl).Result()
+	if len(v) > 10 {
+		v = "(...)"
+	}
 	if err != nil {
-		log.Warnf("redis.set(key=%q, val=%q, ttl=%s): err %v", k, v, ttl, err)
+		log.Warnf("redis.set(%q, %q, ttl=%s): err %v", k, v, ttl, err)
 	} else {
-		log.Tracef("redis.set(key=%q, val=%q, ttl=%s): ok %s", k, v, ttl, res)
+		log.Tracef("redis.set(%q, %q, ttl=%s): ok %s", k, v, ttl, res)
 	}
 	return res, err
 }
@@ -58,9 +65,9 @@ func Del(k string) (bool, error) {
 	count, err := Client.Del(bg, k).Result()
 	res := count == 1
 	if err != nil {
-		log.Warnf("redis.del(key=%q): err %v", k, err)
+		log.Warnf("redis.del(%q): err %v", k, err)
 	} else {
-		log.Tracef("redis.del(key=%q): ok %t", k, res)
+		log.Tracef("redis.del(%q): ok %t", k, res)
 	}
 	return res, err
 }
@@ -69,9 +76,9 @@ func Exists(k string) (bool, error) {
 	count, err := Client.Exists(bg, k).Result()
 	res := count == 1
 	if err != nil {
-		log.Warnf("redis.exists(key=%q): err %v", k, err)
+		log.Warnf("redis.exists(%q): err %v", k, err)
 	} else {
-		log.Tracef("redis.exists(key=%q): ok %t", k, res)
+		log.Tracef("redis.exists(%q): ok %t", k, res)
 	}
 	return res, err
 }

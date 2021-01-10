@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"gopkg.in/tucnak/telebot.v2"
@@ -34,6 +35,7 @@ func Init() {
 }
 
 func GetUpdates(offset int) ([]telebot.Update, error) {
+	t := time.Now()
 	params := map[string]string{
 		"offset":          strconv.Itoa(offset),
 		"timeout":         "50",
@@ -54,7 +56,8 @@ func GetUpdates(offset int) ([]telebot.Update, error) {
 		log.Errorf("bot.getupdates(offset=%d)/decode: err %v", offset, err)
 		return nil, err
 	}
-	log.Tracef("bot.getupdates(offset=%d): ok (%d vals...)", offset, len(resp.Result))
+	d := time.Since(t).Round(time.Millisecond).String()
+	log.Tracef("bot.getupdates(offset=%d): %s ok (%d vals...)", offset, d, len(resp.Result))
 	return resp.Result, nil
 }
 
@@ -84,74 +87,86 @@ func ParseCommand(m *telebot.Message) (cmd string, arg string) {
 	return c, m.Text[p+1:]
 }
 
-func Send(chatid int64, html string, reply int) int {
-	c := &telebot.Chat{ID: chatid}
+func Send(cid int64, html string, reply int) int {
+	t := time.Now()
+	c := &telebot.Chat{ID: cid}
 	m, err := API.Send(c, html, &telebot.SendOptions{
 		ParseMode: telebot.ModeHTML,
 		ReplyTo:   &telebot.Message{ID: reply},
 	})
+	d := time.Since(t).Round(time.Millisecond).String()
 	if err != nil {
-		log.Warnf("bot.send(chatid=%d, html=(...), reply=%d): err %v", chatid, reply, err)
+		log.Warnf("bot.send(cid=%d, html=(...), reply=%d): %s err %v", cid, reply, d, err)
 		return 0
 	}
-	log.Tracef("bot.send(chatid=%d, html=(...), reply=%d): ok %d", chatid, reply, m.ID)
+	log.Tracef("bot.send(cid=%d, html=(...), reply=%d): %s ok %d", cid, reply, d, m.ID)
 	return m.ID
 }
 
-func Delete(chatid int64, messageid int) {
+func Delete(cid int64, mid int) {
+	t := time.Now()
 	err := API.Delete(&telebot.Message{
-		Chat: &telebot.Chat{ID: chatid},
-		ID:   messageid,
+		Chat: &telebot.Chat{ID: cid},
+		ID:   mid,
 	})
+	d := time.Since(t).Round(time.Millisecond).String()
 	if err != nil {
-		log.Warnf("bot.delete(chatid=%d, messageid=%d): err %v", chatid, messageid, err)
+		log.Warnf("bot.delete(cid=%d, mid=%d): %s err %v", cid, mid, d, err)
 	} else {
-		log.Tracef("bot.delete(chatid=%d, messageid=%d): ok", chatid, messageid)
+		log.Tracef("bot.delete(cid=%d, mid=%d): %s ok", cid, mid, d)
 	}
 }
 
-func Mute(chatid int64, userid int) {
-	c := &telebot.Chat{ID: chatid}
+func Mute(cid int64, uid int) {
+	t := time.Now()
+	c := &telebot.Chat{ID: cid}
 	err := API.Restrict(c, &telebot.ChatMember{
-		User:   &telebot.User{ID: userid},
+		User:   &telebot.User{ID: uid},
 		Rights: telebot.NoRights(),
 	})
+	d := time.Since(t).Round(time.Millisecond).String()
 	if err != nil {
-		log.Warnf("bot.mute(chatid=%d, userid=%d): err %v", chatid, userid, err)
+		log.Warnf("bot.mute(cid=%d, uid=%d): %s err %v", cid, uid, d, err)
 	} else {
-		log.Tracef("bot.mute(chatid=%d, userid=%d): ok", chatid, userid)
+		log.Tracef("bot.mute(cid=%d, uid=%d): %s ok", cid, uid, d)
 	}
 }
 
-func Ban(chatid int64, userid int) {
-	c := &telebot.Chat{ID: chatid}
+func Ban(cid int64, uid int) {
+	t := time.Now()
+	c := &telebot.Chat{ID: cid}
 	err := API.Ban(c, &telebot.ChatMember{
-		User: &telebot.User{ID: userid},
+		User: &telebot.User{ID: uid},
 	})
+	d := time.Since(t).Round(time.Millisecond).String()
 	if err != nil {
-		log.Warnf("bot.ban(chatid=%d, userid=%d): err %v", chatid, userid, err)
+		log.Warnf("bot.ban(cid=%d, uid=%d): %s err %v", cid, uid, d, err)
 	} else {
-		log.Tracef("bot.ban(chatid=%d, userid=%d): ok", chatid, userid)
+		log.Tracef("bot.ban(cid=%d, uid=%d): %s ok", cid, uid, d)
 	}
 }
 
-func Unban(chatid int64, userid int) {
-	c := &telebot.Chat{ID: chatid}
-	err := API.Unban(c, &telebot.User{ID: userid})
+func Unban(cid int64, uid int) {
+	t := time.Now()
+	c := &telebot.Chat{ID: cid}
+	err := API.Unban(c, &telebot.User{ID: uid})
+	d := time.Since(t).Round(time.Millisecond).String()
 	if err != nil {
-		log.Warnf("bot.unban(chatid=%d, userid=%d): err %v", chatid, userid, err)
+		log.Warnf("bot.unban(cid=%d, uid=%d): %s err %v", cid, uid, d, err)
 	} else {
-		log.Tracef("bot.unban(chatid=%d, userid=%d): ok", chatid, userid)
+		log.Tracef("bot.unban(cid=%d, uid=%d): %s ok", cid, uid, d)
 	}
 }
 
-func GetChatMember(chatid int64, userid int) *telebot.ChatMember {
-	c := &telebot.Chat{ID: chatid}
-	m, err := API.ChatMemberOf(c, &telebot.User{ID: userid})
+func GetChatMember(cid int64, uid int) *telebot.ChatMember {
+	t := time.Now()
+	c := &telebot.Chat{ID: cid}
+	m, err := API.ChatMemberOf(c, &telebot.User{ID: uid})
+	d := time.Since(t).Round(time.Millisecond).String()
 	if err != nil {
-		log.Warnf("bot.getchatmember(chatid=%d, userid=%d): err %v", chatid, userid, err)
+		log.Tracef("bot.getchatmember(cid=%d, uid=%d): %s err %v", cid, uid, d, err)
 	} else {
-		log.Tracef("bot.getchatmember(chatid=%d, userid=%d): ok (...)", chatid, userid)
+		log.Tracef("bot.getchatmember(cid=%d, uid=%d): %s ok (...)", cid, uid, d)
 	}
 	return m
 }
