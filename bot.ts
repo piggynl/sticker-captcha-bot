@@ -49,6 +49,10 @@ function getAPI(): typeof api {
     return api;
 }
 
+function getMe(): typeof me {
+    return me;
+}
+
 function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: string] {
     const text = m.text;
     if (text === undefined) {
@@ -178,6 +182,7 @@ export = {
     escapeHTML,
     init,
     getAPI,
+    getMe,
     parseCommand,
     send,
     del,

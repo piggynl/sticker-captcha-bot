@@ -74,8 +74,14 @@ class Group {
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
         const m = await Promise.race([
             this.sleep(),
-            new Promise<number | undefined>((resolve) => {
+            new Promise<number | undefined>(async (resolve) => {
                 this.resolvers.set(user.id, resolve);
+                if (user.id === bot.getMe().id) {
+                    try {
+                        const w = await bot.getAPI().sendSticker(this.id, "AAMCBQADGQEAAQj8gWAqpil4fbxtK8H-p3fJsLm9L5HHAAKyAANWX9gfzbj77VD3nceHLtsyAAQBAAdtAAMsPAACHgQ");
+                        await this.onPass(w, w.from as TelegramBot.User);
+                    } catch {}
+                }
             }),
         ]);
         await this.delMsg(h);
@@ -284,9 +290,9 @@ class Group {
                 }
                 const repPass = m.reply_to_message as TelegramBot.Message;
                 if (repPass.new_chat_members !== undefined) {
-                    await Promise.all(repPass.new_chat_members.map((u) => this.onPass(repPass, u)));
+                    await Promise.all(repPass.new_chat_members.map((u) => this.onPass(m, u)));
                 } else {
-                    await this.onPass(repPass, repPass.from as TelegramBot.User);
+                    await this.onPass(m, repPass.from as TelegramBot.User);
                 }
                 break;
 
