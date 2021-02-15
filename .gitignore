@@ -1,4 +1,5 @@
-/sticker-captcha-bot
-/sticker-captcha-bot.exe
+/node_modules/
+
+/dist/
 
 /config.json
