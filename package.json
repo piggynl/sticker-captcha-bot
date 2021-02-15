@@ -1,0 +1,18 @@
+{
+  "private": true,
+  "dependencies": {
+    "node-telegram-bot-api": "^0.51",
+    "npmlog": "^4",
+    "redis": "^3",
+    "source-map-support": "^0.5"
+  },
+  "devDependencies": {
+    "@types/node-telegram-bot-api": "^0.51",
+    "@types/npmlog": "^4",
+    "@types/redis": "^2",
+    "@types/source-map-support": "^0.5"
+  },
+  "scripts": {
+    "start": "tsc && node dist/index.js"
+  }
+}
