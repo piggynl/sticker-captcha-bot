@@ -361,6 +361,10 @@ class Group {
                 }
                 break;
 
+            case "id":
+                await this.send(`<code>${this.id}</code>`, m.message_id);
+                break;
+
             default:
                 return false;
         }
