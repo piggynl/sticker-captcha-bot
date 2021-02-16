@@ -16,15 +16,15 @@ class Group {
     private static index = new Map<number, Group>();
 
     public static get(id: number): Group {
-        const n = new Group(id);
-        const g = Group.index.get(id);
+        let g = Group.index.get(id);
         if (g !== undefined) {
             npmlog.silly("group", "get(%j): ok loaded", id);
             return g;
         }
-        Group.index.set(id, n);
+        g = new Group(id);
+        Group.index.set(id, g);
         npmlog.silly("group", "get(%j): ok stored", id);
-        return n;
+        return g;
     }
 
     public readonly id: number;
@@ -81,13 +81,17 @@ class Group {
         npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j)", this.id, msg.message_id, user.id);
         await this.setKey(`user:${user.id}:pending`, "true");
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
+
+        let sessionResolver: ((m?: number) => void) | undefined;
         const m = await Promise.race([
             this.sleep(),
             new Promise<number | undefined>(async (resolve) => {
-                this.resolvers.set(user.id, (m?: number): void => {
+                const resolver = (m?: number): void => {
                     this.resolvers.delete(user.id);
                     resolve(m);
-                });;
+                };
+                sessionResolver = resolver;
+                this.resolvers.set(user.id, resolver);
                 if (user.id === bot.getMe().id) {
                     try {
                         const w = await bot.getAPI().sendSticker(this.id, "CAACAgUAAxkBAAEI_IFgKqYpeH28bSvB_qd3ybC5vS-RxwACsgADVl_YH824--1Q953HHgQ");
@@ -117,11 +121,18 @@ class Group {
             return;
         }
 
-        npmlog.info("group", "(group=%j).onfail(user=%j)", this.id, user.id);
-        await this.delKey(`user:${user.id}:pending`);
         if (!await this.existsKey("verbose")) {
             await this.delMsg(msg.message_id);
         }
+        if (this.resolvers.get(user.id) !== sessionResolver) {
+            npmlog.info("group", "(group=%j).ondiscard(user=%j)", this.id, user.id);
+            this.resolvers.delete(user.id);
+            return;
+        }
+
+        npmlog.info("group", "(group=%j).onfail(user=%j)", this.id, user.id);
+        this.resolvers.delete(user.id);
+        await this.delKey(`user:${user.id}:pending`);
         await this[await this.getAction()](user.id);
         if (await this.existsKey("quiet")) {
             return;
@@ -185,7 +196,6 @@ class Group {
                     }
                     return this.format(l);
                 }))).join("\n"), m.message_id);
-
                 break;
 
             case "ping":
@@ -237,7 +247,7 @@ class Group {
                     break;
                 }
                 if (arg !== undefined) {
-                    this.setKey("lang", arg);
+                    await this.setKey("lang", arg);
                 }
                 await this.send(await this.format("lang.query", await this.getLang(), i18n.allLangs()), m.message_id);
                 break;
@@ -251,7 +261,7 @@ class Group {
                         await this.send(await this.format("cmd.bad_param"), m.message_id);
                         break;
                     }
-                    this.setKey("action", arg);
+                    await this.setKey("action", arg);
                 }
                 const v = await this.format("action." + await this.getAction());
                 await this.send(await this.format("action.query", v), m.message_id);
@@ -267,7 +277,7 @@ class Group {
                         await this.send(await this.format("cmd.bad_param"), m.message_id);
                         break;
                     }
-                    this.setKey("timeout", arg);
+                    await this.setKey("timeout", arg);
                 }
                 const x = await this.getTimeout();
                 let s = await this.format("timeout.query", x);
@@ -444,6 +454,9 @@ class Group {
                         n = `${n} ${user.last_name}`;
                     }
                     res += `<a href="tg://user?id=${user.id}">${bot.escapeHTML(n)}</a>`;
+                    break;
+                case "i":
+                    res += `<a href="tg://user?id=${user.id}">${user.id}</a>`;
                     break;
                 case "t":
                     res += (await this.getTimeout()).toString();
