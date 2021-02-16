@@ -40,7 +40,7 @@ export = {
     "status.enable": "Bot has been <b>enabled</b> in current group",
     "status.help": "/status - view whether the bot has been enabled in this group",
     "sticker_captcha_bot.help": "<b>Sticker CAPTCHA Bot</b>",
-    "template.help": "In a template, use <code>$$</code> for a single <code>$</code>, <code>$u</code> for a mention to the user, <code>$t</code> for the seconds of timeout.",
+    "template.help": "Some variables for templates of custom prompts: mention user =&gt; <code>$u</code>, mention user via ID only =&gt; <code>$i</code>, timeout (seconds) =&gt; <code>$t</code>, character <code>$</code> =&gt; <code>$$</code>.",
     "timeout.help": "/timeout [integer] - get or set the timeout in this group",
     "timeout.query": "Current timeout is <b>%d seconds</b>",
     "timeout.notice": "<i>But would it be too short for human?</i>",

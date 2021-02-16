@@ -40,7 +40,7 @@ export = {
     "status.enable": "机器人在当前群<b>已启用</b>",
     "status.help": "/status - 查看机器人是否已在当前群启用",
     "sticker_captcha_bot.help": "<b>Sticker CAPTCHA Bot</b>",
-    "template.help": "在模板中，使用 <code>$$</code> 表示一个 <code>$</code>，<code>$u</code> 表示被提到的用户，<code>$t</code> 表示超时时间的秒数。",
+    "template.help": "定制验证的提示模板需要了解一些变量：提及用户 =&gt; <code>$u</code>，仅通过 ID 提及用户 =&gt; <code>$i</code>，超时时间（秒）=&gt; <code>$t</code>，字符 <code>$</code> =&gt; <code>$$</code>。",
     "timeout.help": "/timeout [integer] - 查看或设置当前群的超时时间",
     "timeout.query": "当前的超时时间是 <b>%d 秒</b>",
     "timeout.notice": "<b>但是这对于人类来说会不会有点短？</b>",
