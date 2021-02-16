@@ -32,7 +32,7 @@ async function init(): Promise<void> {
     api = new TelegramBotAPI(config.get("token"),{
         request: {
             url: undefined as any as string,
-            timeout: 20e3,
+            timeout: config.get("timeout"),
             proxy: config.get("proxy"),
         },
     });
@@ -87,6 +87,7 @@ async function send(chat: number, html: string, reply?: number): Promise<number>
     let m: TelegramBotAPI.Message;
     try {
         m = await api.sendMessage(chat, html, {
+            disable_web_page_preview: true,
             parse_mode: "HTML",
             reply_to_message_id: reply,
         });
@@ -96,7 +97,7 @@ async function send(chat: number, html: string, reply?: number): Promise<number>
         return 0;
     }
     const d = (Date.now() - t).toString() + "ms";
-    log("silly", "send(chat=%j, html=(...), reply=%j): %s ok %j", chat, reply, d, m.message_id);
+    log("verbose", "send(chat=%j, html=(...), reply=%j): %s ok %j", chat, reply, d, m.message_id);
     return m.message_id;
 }
 
@@ -111,7 +112,7 @@ async function del(chat: number, msg: number): Promise<boolean> {
         return false;
     }
     const d = (Date.now() - t).toString() + "ms";
-    log("silly", "del(chat=%j, msg=%j): %s ok %j", chat, msg, d, r);
+    log("verbose", "del(chat=%j, msg=%j): %s ok %j", chat, msg, d, r);
     return r;
 }
 
@@ -128,7 +129,7 @@ async function mute(chat: number, user: number): Promise<boolean> {
         return false;
     }
     const d = (Date.now() - t).toString() + "ms";
-    log("silly", "mute(chat=%j, user=%j): %s ok %j", chat, user, d, r);
+    log("verbose", "mute(chat=%j, user=%j): %s ok %j", chat, user, d, r);
     return r;
 }
 
@@ -143,7 +144,7 @@ async function ban(chat: number, user: number): Promise<boolean> {
         return false;
     }
     const d = (Date.now() - t).toString() + "ms";
-    log("silly", "ban(chat=%j, user=%j): %s ok %j", chat, user, d, r);
+    log("verbose", "ban(chat=%j, user=%j): %s ok %j", chat, user, d, r);
     return r;
 }
 
@@ -158,7 +159,7 @@ async function unban(chat: number, user: number): Promise<boolean> {
         return false;
     }
     const d = (Date.now() - t).toString() + "ms";
-    log("silly", "unban(chat=%j, user=%j): %s ok %j", chat, user, d, r);
+    log("verbose", "unban(chat=%j, user=%j): %s ok %j", chat, user, d, r);
     return r;
 }
 
@@ -170,11 +171,26 @@ async function getChatMember(chat: number, user: number): Promise<TelegramBotAPI
         r = await api.getChatMember(chat, user as any);
     } catch (e) {
         const d = (Date.now() - t).toString() + "ms";
-        log("warn", "getchatmember(chat=%j, user=%j): %s err %s", chat, user, d, e);
+        log("warn", "getmember(chat=%j, user=%j): %s err %s", chat, user, d, e);
         return undefined;
     }
     const d = (Date.now() - t).toString() + "ms";
-    log("silly", "getchatmember(chat=%j, user=%j): %s ok (...)", chat, user, d);
+    log("verbose", "getmember(chat=%j, user=%j): %s ok (...)", chat, user, d);
+    return r;
+}
+
+async function leaveChat(chat: number): Promise<boolean> {
+    const t = Date.now();
+    let r: boolean;
+    try {
+        r = await api.leaveChat(chat);
+    } catch (e) {
+        const d = (Date.now() - t).toString() + "ms";
+        log("warn", "leave(chat=%j): %s err %s", chat, d, e);
+        return false;
+    }
+    const d = (Date.now() - t).toString() + "ms";
+    log("verbose", "leave(chat=%j): %s ok %j", chat, d, r);
     return r;
 }
 
@@ -190,4 +206,5 @@ export = {
     ban,
     unban,
     getChatMember,
+    leaveChat,
 }

@@ -10,6 +10,8 @@ import redis from "./redis";
 Error.stackTraceLimit = Infinity;
 
 npmlog.level = "silly";
+npmlog.stream = process.stdout;
+npmlog.enableColor();
 
 (async () => {
     await config.init();
@@ -18,17 +20,19 @@ npmlog.level = "silly";
 
     let lastUpdateID = -1;
     while (true) {
-        const updates = await bot.getAPI().getUpdates({
-            allowed_updates: ["message"],
-            offset: lastUpdateID + 1,
-            timeout: 50,
-        });
+        try {
+            const updates = await bot.getAPI().getUpdates({
+                allowed_updates: ["message"],
+                offset: lastUpdateID + 1,
+                timeout: 50,
+            });
 
-        for (const upd of updates) {
-            lastUpdateID = upd.update_id;
-            const m = upd.message;
-            const g = Group.get(m?.chat.id as number);
-            g.handleMessage(m as any);
-        }
+            for (const upd of updates) {
+                lastUpdateID = upd.update_id;
+                const m = upd.message;
+                const g = Group.get(m?.chat.id as number);
+                g.handleMessage(m as any).catch(() => undefined);
+            }
+        } catch {}
     }
 })();

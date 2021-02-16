@@ -37,9 +37,12 @@ class Group {
     }
 
     public async handleMessage(m: TelegramBot.Message): Promise<void> {
-        npmlog.silly("bot", "(update, chat=%j, msg=%j)", m.chat.id, m.message_id);
+        npmlog.verbose("bot", "(update, chat=%j, msg=%j)", m.chat.id, m.message_id);
         for (const u of (m.new_chat_members || [])) {
-            await this.delKey(`user:${u}:role`);
+            await this.delKey(`user:${u.id}:role`);
+            if (u.id === bot.getMe().id) {
+                await this.delKey("enabled");
+            }
         }
         if (await this.handleVerification(m)) {
             return;
@@ -61,6 +64,12 @@ class Group {
         if (!await this.existsKey("enabled")) {
             return false;
         }
+        if (await this.getRole(bot.getMe().id) !== "admin") {
+            await this.delKey("enabled");
+            await this.send(await this.format("bot.angry"));
+            await this.leave();
+            return true;
+        }
         if (m.new_chat_members !== undefined) {
             await Promise.all(m.new_chat_members.map((u) => this.onJoin(m, u)));
             return true;
@@ -69,22 +78,27 @@ class Group {
     }
 
     private async onJoin(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
-        npmlog.silly("group", "(group=%j).onjoin(msg=%j, user=%j)", this.id, msg.message_id, user.id);
+        npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j)", this.id, msg.message_id, user.id);
         await this.setKey(`user:${user.id}:pending`, "true");
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
         const m = await Promise.race([
             this.sleep(),
             new Promise<number | undefined>(async (resolve) => {
-                this.resolvers.set(user.id, resolve);
+                this.resolvers.set(user.id, (m?: number): void => {
+                    this.resolvers.delete(user.id);
+                    resolve(m);
+                });;
                 if (user.id === bot.getMe().id) {
                     try {
-                        const w = await bot.getAPI().sendSticker(this.id, "AAMCBQADGQEAAQj8gWAqpil4fbxtK8H-p3fJsLm9L5HHAAKyAANWX9gfzbj77VD3nceHLtsyAAQBAAdtAAMsPAACHgQ");
+                        const w = await bot.getAPI().sendSticker(this.id, "CAACAgUAAxkBAAEI_IFgKqYpeH28bSvB_qd3ybC5vS-RxwACsgADVl_YH824--1Q953HHgQ");
                         await this.onPass(w, w.from as TelegramBot.User);
                     } catch {}
                 }
             }),
         ]);
-        await this.delMsg(h);
+        if (!await this.existsKey("verbose")) {
+            await this.delMsg(h);
+        }
 
         if (typeof m === "number") {
             if (await this.existsKey("quiet")) {
@@ -103,7 +117,7 @@ class Group {
             return;
         }
 
-        npmlog.silly("group", "(group=%j).onfail(user=%j)", this.id, user.id);
+        npmlog.info("group", "(group=%j).onfail(user=%j)", this.id, user.id);
         await this.delKey(`user:${user.id}:pending`);
         if (!await this.existsKey("verbose")) {
             await this.delMsg(msg.message_id);
@@ -121,7 +135,7 @@ class Group {
     }
 
     private async onPass(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
-        npmlog.silly("group", "(group=%j).onpass(msg=%j, user=%j)", this.id, msg.message_id, user.id);
+        npmlog.info("group", "(group=%j).onpass(msg=%j, user=%j)", this.id, msg.message_id, user.id);
         await this.delKey(`user:${user.id}:pending`);
         const resolve = this.resolvers.get(user.id);
         if (resolve === undefined) {
@@ -134,13 +148,60 @@ class Group {
         const [cmd, arg] = bot.parseCommand(m);
         switch (cmd) {
 
+            case "start":
+            case "help":
+                const help = [
+                    "sticker_captcha_bot.help",
+                    "",
+                    "help.help",
+                    "ping.help",
+                    "refresh.help",
+                    "",
+                    "status.help",
+                    "enable.help",
+                    "disable.help",
+                    "",
+                    "lang.help",
+                    "timeout.help",
+                    "action.help",
+                    "",
+                    "onjoin.help",
+                    "onpass.help",
+                    "onfail.help",
+                    "template.help",
+                    "",
+                    "verbose.help",
+                    "quiet.help",
+                    "",
+                    "reverify.help",
+                    "pass.help",
+                    "fail.help",
+                    "",
+                    "open_source.help",
+                ];
+                await this.send((await Promise.all(help.map((l: string): Promise<string> => {
+                    if (l.length === 0) {
+                        return Promise.resolve("");
+                    }
+                    return this.format(l);
+                }))).join("\n"), m.message_id);
+
+                break;
+
             case "ping":
-                const l = (Math.floor(Date.now() / 1e3) - m.date).toString() + "s";
+                const l = (Math.ceil(Date.now() / 1e3) - m.date).toString() + "s";
                 await this.send(await this.format("ping.pong", l), m.message_id);
                 break;
 
-            case "help":
-                // TODO: fill me
+            case "refresh":
+                let u = m.from?.id;
+                if (m.reply_to_message !== undefined) {
+                    u = m.reply_to_message.from?.id;
+                }
+                if (u !== undefined) {
+                    await this.delKey(`user:${u}:role`);
+                }
+                await this.delMsg(m.message_id);
                 break;
 
             case "status":
@@ -160,11 +221,25 @@ class Group {
                     break;
                 }
                 if (cmd === "enable") {
+                    if (await this.getRole(bot.getMe().id, true) !== "admin") {
+                        await this.send(await this.format("bot.not_admin"), m.message_id);
+                        break;
+                    }
                     await this.setKey("enabled", "true");
                 } else {
                     await this.delKey("enabled");
                 }
                 await this.send(await this.format(`status.${cmd}`), m.message_id);
+                break;
+
+            case "lang":
+                if (!await this.checkFromAdmin(m, true)) {
+                    break;
+                }
+                if (arg !== undefined) {
+                    this.setKey("lang", arg);
+                }
+                await this.send(await this.format("lang.query", await this.getLang(), i18n.allLangs()), m.message_id);
                 break;
 
             case "action":
@@ -173,10 +248,7 @@ class Group {
                 }
                 if (arg !== undefined) {
                     if (!["kick", "mute", "ban"].includes(arg)) {
-                        await this.send((await Promise.all([
-                            this.format("cmd.bad_param"),
-                            this.format("action.help.full"),
-                        ])).join("\n\n"), m.message_id);
+                        await this.send(await this.format("cmd.bad_param"), m.message_id);
                         break;
                     }
                     this.setKey("action", arg);
@@ -192,10 +264,7 @@ class Group {
                 if (arg !== undefined) {
                     const x = Number.parseInt(arg);
                     if (Number.isNaN(x) || x <= 0 || x >= 2147483648) {
-                        await this.send((await Promise.all([
-                            this.format("cmd.bad_param"),
-                            this.format("timeout.help.full"),
-                        ])).join("\n\n"), m.message_id);
+                        await this.send(await this.format("cmd.bad_param"), m.message_id);
                         break;
                     }
                     this.setKey("timeout", arg);
@@ -208,14 +277,16 @@ class Group {
                 await this.send(s, m.message_id);
                 break;
 
-            case "lang":
+            case "onjoin":
+            case "onpass":
+            case "onfail":
                 if (!await this.checkFromAdmin(m)) {
                     break;
                 }
                 if (arg !== undefined) {
-                    this.setKey("lang", arg);
+                    await this.setKey(`${cmd}:template`, arg);
                 }
-                await this.send(await this.format("lang.query", this.getLang(), i18n.allLangs()), m.message_id);
+                await this.send(await this.format(`${cmd}.query`, await this.getTemplate(cmd)), m.message_id)
                 break;
 
             case "verbose":
@@ -242,34 +313,8 @@ class Group {
                         }
                         break;
                     default:
-                        await this.send((await Promise.all([
-                            this.format("cmd.bad_param"),
-                            this.format(`${cmd}.help.full`),
-                        ])).join("\n\n"), m.message_id);
+                        await this.send(await this.format("cmd.bad_param"), m.message_id);
                 }
-                break;
-
-            case "onjoin":
-            case "onpass":
-            case "onfail":
-                if (!await this.checkFromAdmin(m)) {
-                    break;
-                }
-                if (arg !== undefined) {
-                    await this.setKey(`${cmd}:template`, arg);
-                }
-                await this.send(await this.format(`${cmd}.query`, await this.getTemplate(cmd)), m.message_id)
-                break;
-
-            case "refresh":
-                let u = m.from?.id;
-                if (m.reply_to_message !== undefined) {
-                    u = m.reply_to_message.from?.id;
-                }
-                if (u !== undefined) {
-                    await this.delKey(`user:${u}:role`);
-                }
-                await this.delMsg(m.message_id);
                 break;
 
             case "reverify":
@@ -323,12 +368,19 @@ class Group {
         return true;
     }
 
-    private async checkFromAdmin(m: TelegramBot.Message): Promise<boolean> {
-        if (await this.getRole(m.from?.id as number) === "admin") {
-            return true;
+    private async checkFromAdmin(m: TelegramBot.Message, allowPrivate?: boolean): Promise<boolean> {
+        if (m.chat.type === "private") {
+            if (allowPrivate) {
+                return true;
+            }
+            await this.send(await this.format("cmd.not_in_group"), m.message_id);
+            return false
         }
-        await this.send(await this.format("cmd.not_admin"), m.message_id);
-        return false;
+        if (await this.getRole(m.from?.id as number) !== "admin") {
+            await this.send(await this.format("cmd.not_admin"), m.message_id);
+            return false;
+        }
+        return true;
     }
 
     private async checkHasReply(m: TelegramBot.Message): Promise<boolean> {
@@ -339,11 +391,19 @@ class Group {
         return false;
     }
 
-    private async getRole(user: number): Promise<Role> {
-        let r = await this.getKey(`user:${user}:role`);
-        if (r !== undefined) {
-            // TODO: type check
-            return r as Role;
+    private async sleep(): Promise<void> {
+        const time = await this.getTimeout() * 1e3;
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
+
+    private async getRole(user: number, refresh: boolean = false): Promise<Role> {
+        let r: string | undefined;
+        if (!refresh) {
+            r = await this.getKey(`user:${user}:role`);
+            if (r !== undefined) {
+                // TODO: type check
+                return r as Role;
+            }
         }
         const e = await bot.getChatMember(this.id, user);
         switch (true) {
@@ -389,11 +449,6 @@ class Group {
             }
         }
         return res;
-    }
-
-    private async sleep(): Promise<void> {
-        const time = await this.getTimeout() * 1e3;
-        return new Promise((resolve) => setTimeout(resolve, time));
     }
 
     private async getTemplate(on: "onjoin" | "onpass" | "onfail"): Promise<string> {
@@ -467,14 +522,14 @@ class Group {
         await this.delKey(`user:${user}:role`);
     }
 
-    private async unban(user: number): Promise<boolean> {
-        return bot.unban(this.id, user);
-    }
-
     private async kick(user: number): Promise<void> {
         await bot.ban(this.id, user);
         await this.delKey(`user:${user}:role`);
         await bot.unban(this.id, user);
+    }
+
+    private async leave(): Promise<boolean> {
+        return bot.leaveChat(this.id);
     }
 
     private async format(key: string, ...args: any[]): Promise<string> {

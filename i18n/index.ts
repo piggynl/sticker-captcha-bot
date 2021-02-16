@@ -11,7 +11,7 @@ languages.set("en_US", en_US);
 languages.set("zh_CN", zh_CN);
 
 function allLangs(): string {
-    let res = [];
+    let res: string[] = [];
     for (const l of languages.keys()) {
         res.push(`<code>${l}</code>`);
     }
@@ -19,18 +19,9 @@ function allLangs(): string {
 }
 
 function format(lang: string, key: string, ...args: any[]): string {
-    let m = languages.get(lang);
     const n = languages.get("en_US") as Record<string, string>;
-    if (m === undefined) {
-        m = n;
-    }
-    let s = m[key];
-    if (s === undefined) {
-        s = n[key];
-    }
-    if (s === undefined) {
-        s = `{{key=${key}, args=%j}}`;
-    }
+    const m = languages.get(lang) || n;
+    const s = m[key] || n[key] || `{{key=${key}, args=%j}}`;
     return util.format(s, ...args);
 }
 
