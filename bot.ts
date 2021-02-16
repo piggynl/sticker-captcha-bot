@@ -69,7 +69,7 @@ function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: string] {
     }
     c = c.toLowerCase();
     if (c.indexOf("@") !== -1) {
-        if (c.endsWith("@" + me.username)) {
+        if (c.endsWith("@" + me.username?.toLowerCase())) {
             c = c.slice(0, c.length - (me.username?.length as number + 1))
         } else {
             return [];

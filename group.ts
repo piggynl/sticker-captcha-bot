@@ -158,7 +158,6 @@ class Group {
     private async handleCommand(m: TelegramBot.Message): Promise<boolean> {
         const [cmd, arg] = bot.parseCommand(m);
         switch (cmd) {
-
             case "start":
             case "help":
                 const help = [
@@ -190,12 +189,17 @@ class Group {
                     "",
                     "open_source.help",
                 ];
-                await this.send((await Promise.all(help.map((l: string): Promise<string> => {
+                const h = await this.send((await Promise.all(help.map((l: string): Promise<string> => {
                     if (l.length === 0) {
                         return Promise.resolve("");
                     }
                     return this.format(l);
                 }))).join("\n"), m.message_id);
+                if (await this.existsKey("verbose")) {
+                    break;
+                }
+                await this.sleep();
+                await this.delMsg(h);
                 break;
 
             case "ping":
