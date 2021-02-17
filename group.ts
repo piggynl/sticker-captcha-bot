@@ -119,6 +119,9 @@ class Group {
     }
 
     private async onPass(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
+        if (!await this.existsKey(`user:${user.id}:pending`)) {
+            return;
+        }
         npmlog.info("group", "(group=%j).onpass(msg=%j, user=%j)", this.id, msg.message_id, user.id);
         await this.delKey(`user:${user.id}:pending`);
         const resolve = this.resolvers.get(user.id);
@@ -138,6 +141,9 @@ class Group {
     }
 
     private async onFail(user: TelegramBot.User): Promise<void> {
+        if (!await this.existsKey(`user:${user.id}:pending`)) {
+            return;
+        }
         npmlog.info("group", "(group=%j).onfail(user=%j)", this.id, user.id);
         this.resolvers.delete(user.id);
         await this.delKey(`user:${user.id}:pending`);
