@@ -12,7 +12,6 @@ export = {
     "cmd.need_reply": "Replying to a message is required when using this command.",
     "cmd.not_admin": "Emm...Only admins with <i>ban users</i> privilege are allowed to use this command.",
     "cmd.not_in_group": "This command only works in a group.",
-    "cmd.not_priv": "This command only works in a private chat.",
     "disable.help": "/disable - disable the bot in this group",
     "enable.help": "/enable - enable the bot in this group",
     "fail.help": "/fail - fail the verification for a user manually",

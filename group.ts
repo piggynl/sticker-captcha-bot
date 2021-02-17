@@ -167,8 +167,7 @@ class Group {
         switch (cmd) {
             case "start":
             case "help":
-                if (m.chat.type !== "private") {
-                    await this.send(await this.format("cmd.not_priv"), m.message_id);
+                if (!await this.checkFromAdmin(m, true)) {
                     break;
                 }
                 const help = [
@@ -202,10 +201,7 @@ class Group {
                 ];
                 const lang = await this.getLang()
                 await this.send(help.map((l: string): string => {
-                    if (l.length === 0) {
-                        return "";
-                    }
-                    return i18n.format(lang, l);
+                    return l.length === 0 ? "" : i18n.format(lang, l);
                 }).join("\n"), m.message_id);
                 break;
 
@@ -229,11 +225,8 @@ class Group {
                 if (!await this.checkFromAdmin(m)) {
                     break;
                 }
-                if (await this.existsKey("enabled")) {
-                    await this.send(await this.format("status.enable"), m.message_id);
-                } else {
-                    await this.send(await this.format("status.disable"), m.message_id);
-                }
+                const status = await this.existsKey("enabled") ? "enable" : "disable";
+                await this.send(await this.format(`status.${status}`), m.message_id);
                 break;
 
             case "enable":
@@ -320,18 +313,15 @@ class Group {
                     case "on":
                         await this.setKey(cmd, "true");
                         await this.delKey(conflict);
-                        await this.send(await this.format(`${cmd}.${arg}`), m.message_id);
+                        await this.send(await this.format(`${cmd}.on`), m.message_id);
                         break;
                     case "off":
                         await this.delKey(cmd);
                         await this.send(await this.format(`${cmd}.off`), m.message_id);
                         break;
                     case undefined:
-                        if (await this.existsKey(cmd)) {
-                            await this.send(await this.format(`${cmd}.on`), m.message_id);
-                        } else {
-                            await this.send(await this.format(`${cmd}.off`), m.message_id);
-                        }
+                        const status = await this.existsKey(cmd) ? "on" : "off";
+                        await this.send(await this.format(`${cmd}.${status}`), m.message_id);
                         break;
                     default:
                         await this.send(await this.format("cmd.bad_param"), m.message_id);
@@ -395,9 +385,7 @@ class Group {
     private async sleep<T>(res: T): Promise<T>;
     private async sleep(res?: any): Promise<any> {
         const time = await this.getTimeout() * 1e3;
-        return new Promise((resolve) => setTimeout(() => {
-            resolve(res);
-        }, time));
+        return new Promise((resolve) => setTimeout(() => resolve(res), time));
     }
 
     private async getRole(user: number, refresh: boolean = false): Promise<Role> {
@@ -456,10 +444,7 @@ class Group {
 
     private async getTemplate(on: "onjoin" | "onpass" | "onfail"): Promise<string> {
         const s = await this.getKey(`${on}:template`);
-        if (s === undefined) {
-            return this.format(`${on}.default`);
-        }
-        return s;
+        return s !== undefined ? s : this.format(`${on}.default`);
     }
 
     private async getAction(): Promise<Action> {
@@ -474,38 +459,27 @@ class Group {
     private async getTimeout(): Promise<number> {
         const s = await this.getKey("timeout");
         const t = Number.parseInt(s as string);
-        if (Number.isNaN(t)) {
-            return 60;
-        }
-        return t;
+        return Number.isNaN(t) ? 60 : t;
     }
 
     private async getLang(): Promise<string> {
-        const s = await this.getKey("lang");
-        if (s === undefined) {
-            return "en_US";
-        }
-        return s;
+        return await this.getKey("lang") || "en_US";
     }
 
     private async getKey(key: string): Promise<string | undefined> {
-        const k = `group:${this.id}:${key}`;
-        return redis.get(k);
+        return redis.get(`group:${this.id}:${key}`);
     }
 
     private async setKey(key: string, val: string, ttl?: number): Promise<void> {
-        const k = `group:${this.id}:${key}`;
-        return redis.set(k, val, ttl);
+        return redis.set(`group:${this.id}:${key}`, val, ttl);
     }
 
     private async delKey(key: string): Promise<void> {
-        const k = `group:${this.id}:${key}`;
-        return redis.del(k);
+        return redis.del(`group:${this.id}:${key}`);
     }
 
     private async existsKey(key: string): Promise<boolean> {
-        const k = `group:${this.id}:${key}`;
-        return redis.exists(k);
+        return redis.exists(`group:${this.id}:${key}`);
     }
 
     private async send(html: string, reply?: number): Promise<number> {

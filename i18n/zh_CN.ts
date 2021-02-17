@@ -12,7 +12,6 @@ export = {
     "cmd.need_reply": "使用此命令需要回复一条消息。",
     "cmd.not_admin": "诶？此命令仅限有<b>封禁用户</b>权限的管理员使用。",
     "cmd.not_in_group": "请在群组中使用此命令。",
-    "cmd.not_priv": "请在私聊中使用此命令。",
     "disable.help": "/disable - 在本群禁用此机器人",
     "enable.help": "/enable - 在本群启用此机器人",
     "fail.help": "/fail - 回复某用户的消息或者 Ta 的入群消息，强制使该待验证用户验证失败",
