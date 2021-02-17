@@ -6,7 +6,7 @@ export = {
     "action.kick": "kick",
     "action.mute": "mute",
     "action.query": "Current actions for users who failed the verification is <b>%s</b>.",
-    "bot.angry": "ε٩(๑> ₃ <)۶з <i>Somebody has taken my admin privileges away. I'm unhappy.</i>",
+    "bot.angry": "ε٩(๑&gt; ₃ &lt;)۶з <i>Somebody has taken my admin privileges away. I'm unhappy.</i>",
     "bot.not_admin": "The bot requires <i>delete messages</i> and <i>ban users</i> privileges to work.",
     "cmd.bad_param": "Illegal argument.",
     "cmd.need_reply": "Replying to a message is required when using this command.",

@@ -6,7 +6,7 @@ export = {
     "action.kick": "踢出",
     "action.mute": "禁言",
     "action.query": "当前对验证失败用户的措施是<b>%s</b>",
-    "bot.angry": "ε٩(๑> ₃ <)۶з <b>有人抢走了我的管理员权限，我不开心了。</b>",
+    "bot.angry": "ε٩(๑&gt; ₃ &lt;)۶з <b>有人抢走了我的管理员权限，我不开心了。</b>",
     "bot.not_admin": "操作失败，可能是群管并未赋予我<b>删除消息</b>和<b>封禁用户</b>权限。",
     "cmd.bad_param": "不合法的参数。",
     "cmd.need_reply": "使用此命令需要回复一条消息。",
