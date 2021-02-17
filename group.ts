@@ -145,8 +145,11 @@ class Group {
             return;
         }
         npmlog.info("group", "(group=%j).onfail(user=%j)", this.id, user.id);
-        this.resolvers.delete(user.id);
         await this.delKey(`user:${user.id}:pending`);
+        const resolve = this.resolvers.get(user.id);
+        if (resolve !== undefined) {
+            resolve(false);
+        }
         await this[await this.getAction()](user.id);
         if (await this.existsKey("quiet")) {
             return;
@@ -164,6 +167,10 @@ class Group {
         switch (cmd) {
             case "start":
             case "help":
+                if (m.chat.type !== "private") {
+                    await this.send(await this.format("cmd.not_priv"), m.message_id);
+                    break;
+                }
                 const help = [
                     "sticker_captcha_bot.help",
                     "",
@@ -193,17 +200,13 @@ class Group {
                     "",
                     "open_source.help",
                 ];
-                const h = await this.send((await Promise.all(help.map((l: string): Promise<string> => {
+                const lang = await this.getLang()
+                await this.send(help.map((l: string): string => {
                     if (l.length === 0) {
-                        return Promise.resolve("");
+                        return "";
                     }
-                    return this.format(l);
-                }))).join("\n"), m.message_id);
-                if (await this.existsKey("verbose")) {
-                    break;
-                }
-                await this.sleep();
-                await this.delMsg(h);
+                    return i18n.format(lang, l);
+                }).join("\n"), m.message_id);
                 break;
 
             case "ping":
