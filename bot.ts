@@ -29,7 +29,7 @@ let api: TelegramBotAPI;
 let me: TelegramBotAPI.User;
 
 async function init(): Promise<void> {
-    api = new TelegramBotAPI(config.get("token"),{
+    api = new TelegramBotAPI(config.get("token"), {
         request: {
             url: undefined as any as string,
             timeout: config.get("timeout"),
@@ -77,9 +77,9 @@ function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: string] {
     }
     const p = text.indexOf(" ");
     if (p === -1) {
-        return [c]
+        return [c];
     }
-    return [c, text.slice(p + 1)]
+    return [c, text.slice(p + 1)];
 }
 
 async function send(chat: number, html: string, reply?: number): Promise<number> {

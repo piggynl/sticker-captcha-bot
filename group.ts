@@ -29,7 +29,7 @@ class Group {
 
     public readonly id: number;
 
-    private readonly resolvers: Map<number, (m?: number) => void>;
+    private readonly resolvers: Map<number, (passed: boolean) => void>;
 
     public constructor(id: number) {
         this.id = id;
@@ -78,58 +78,66 @@ class Group {
     }
 
     private async onJoin(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
-        npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j)", this.id, msg.message_id, user.id);
+        if (await this.existsKey(`user:${user.id}:pending`)) {
+            npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j) dup", this.id, msg.message_id, user.id);
+            return;
+        }
+
+        npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j) started", this.id, msg.message_id, user.id);
         await this.setKey(`user:${user.id}:pending`, "true");
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
 
-        let sessionResolver: ((m?: number) => void) | undefined;
-        const m = await Promise.race([
-            this.sleep(),
-            new Promise<number | undefined>(async (resolve) => {
-                const resolver = (m?: number): void => {
+        const passed = await Promise.race([
+            this.sleep(false),
+            new Promise<boolean>(async (resolve) => {
+                const resolver = (passed: boolean): void => {
                     this.resolvers.delete(user.id);
-                    resolve(m);
+                    resolve(passed);
                 };
-                sessionResolver = resolver;
                 this.resolvers.set(user.id, resolver);
                 if (user.id === bot.getMe().id) {
                     try {
-                        const w = await bot.getAPI().sendSticker(this.id, "CAACAgUAAxkBAAEI_IFgKqYpeH28bSvB_qd3ybC5vS-RxwACsgADVl_YH824--1Q953HHgQ");
+                        const s = "CAACAgUAAxkBAAEI_IFgKqYpeH28bSvB_qd3ybC5vS-RxwACsgADVl_YH824--1Q953HHgQ";
+                        const w = await bot.getAPI().sendSticker(this.id, s);
                         await this.onPass(w, w.from as TelegramBot.User);
                     } catch {}
                 }
             }),
         ]);
+
         if (!await this.existsKey("verbose")) {
             await this.delMsg(h);
         }
-
-        if (typeof m === "number") {
-            if (await this.existsKey("quiet")) {
-                await this.delMsg(m);
-                return;
-            }
-            const g = await this.send(await this.render(await this.getTemplate("onpass"), user), m);
-            if (await this.existsKey("verbose")) {
-                return;
-            }
-            await this.sleep();
-            await Promise.all([
-                this.delMsg(h),
-                this.delMsg(g),
-            ]);
+        if (passed) {
             return;
         }
 
         if (!await this.existsKey("verbose")) {
             await this.delMsg(msg.message_id);
         }
-        if (this.resolvers.get(user.id) !== sessionResolver) {
-            npmlog.info("group", "(group=%j).ondiscard(user=%j)", this.id, user.id);
-            this.resolvers.delete(user.id);
+        await this.onFail(user);
+    }
+
+    private async onPass(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
+        npmlog.info("group", "(group=%j).onpass(msg=%j, user=%j)", this.id, msg.message_id, user.id);
+        await this.delKey(`user:${user.id}:pending`);
+        const resolve = this.resolvers.get(user.id);
+        if (resolve !== undefined) {
+            resolve(true);
+        }
+        if (await this.existsKey("quiet")) {
+            await this.delMsg(msg.message_id);
             return;
         }
+        const g = await this.send(await this.render(await this.getTemplate("onpass"), user), msg.message_id);
+        if (await this.existsKey("verbose")) {
+            return;
+        }
+        await this.sleep();
+        await this.delMsg(g);
+    }
 
+    private async onFail(user: TelegramBot.User): Promise<void> {
         npmlog.info("group", "(group=%j).onfail(user=%j)", this.id, user.id);
         this.resolvers.delete(user.id);
         await this.delKey(`user:${user.id}:pending`);
@@ -143,16 +151,6 @@ class Group {
         }
         await this.sleep();
         await this.delMsg(f);
-    }
-
-    private async onPass(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
-        npmlog.info("group", "(group=%j).onpass(msg=%j, user=%j)", this.id, msg.message_id, user.id);
-        await this.delKey(`user:${user.id}:pending`);
-        const resolve = this.resolvers.get(user.id);
-        if (resolve === undefined) {
-            return;
-        }
-        resolve(msg.message_id);
     }
 
     private async handleCommand(m: TelegramBot.Message): Promise<boolean> {
@@ -332,46 +330,21 @@ class Group {
                 break;
 
             case "reverify":
-                if (!await this.checkFromAdmin(m) || !await this.checkHasReply(m)) {
-                    break;
-                }
-                const repJoin = m.reply_to_message as TelegramBot.Message;
-                if (repJoin.new_chat_members !== undefined) {
-                    await Promise.all(repJoin.new_chat_members.map((u) => this.onJoin(repJoin, u)));
-                } else {
-                    await this.onJoin(repJoin, repJoin.from as TelegramBot.User);
-                }
-                break;
-
             case "pass":
-                if (!await this.checkFromAdmin(m) || !await this.checkHasReply(m)) {
-                    break;
-                }
-                const repPass = m.reply_to_message as TelegramBot.Message;
-                if (repPass.new_chat_members !== undefined) {
-                    await Promise.all(repPass.new_chat_members.map((u) => this.onPass(m, u)));
-                } else {
-                    await this.onPass(m, repPass.from as TelegramBot.User);
-                }
-                break;
-
             case "fail":
                 if (!await this.checkFromAdmin(m) || !await this.checkHasReply(m)) {
                     break;
                 }
-                const repFail = m.reply_to_message as TelegramBot.Message;
-                if (repFail.new_chat_members !== undefined) {
-                    for (const u of repFail.new_chat_members) {
-                        const resolve = this.resolvers.get(u.id);
-                        if (resolve !== undefined) {
-                            resolve(undefined);
-                        }
-                    }
+                const rep = m.reply_to_message as TelegramBot.Message;
+                const func = {
+                    reverify: (u: TelegramBot.User) => this.onJoin(rep, u),
+                    pass: (u: TelegramBot.User) => this.onPass(m, u),
+                    fail: (u: TelegramBot.User) => this.onFail(u),
+                }[cmd];
+                if (rep.new_chat_members !== undefined) {
+                    await Promise.all(rep.new_chat_members.map((u) => func(u)));
                 } else {
-                    const resolve = this.resolvers.get(m.reply_to_message?.from?.id as number);
-                    if (resolve !== undefined) {
-                        resolve(undefined);
-                    }
+                    await func(rep.from as TelegramBot.User);
                 }
                 break;
 
@@ -409,9 +382,13 @@ class Group {
         return false;
     }
 
-    private async sleep(): Promise<void> {
+    private async sleep(): Promise<void>;
+    private async sleep<T>(res: T): Promise<T>;
+    private async sleep(res?: any): Promise<any> {
         const time = await this.getTimeout() * 1e3;
-        return new Promise((resolve) => setTimeout(resolve, time));
+        return new Promise((resolve) => setTimeout(() => {
+            resolve(res);
+        }, time));
     }
 
     private async getRole(user: number, refresh: boolean = false): Promise<Role> {
@@ -424,16 +401,12 @@ class Group {
             }
         }
         const e = await bot.getChatMember(this.id, user);
-        switch (true) {
-            case e === undefined:
-                r = "none";
-                break;
-            case e?.status === "creator" || e?.can_restrict_members:
-                r = "admin";
-                break;
-            default:
-                r = "member";
-                break;
+        if (e === undefined) {
+            r = "none";
+        } else if (e?.status === "creator" || e?.can_restrict_members) {
+            r = "admin";
+        } else {
+            r = "member";
         }
         await this.setKey(`user:${user}:role`, r, 120);
         return r as Role;

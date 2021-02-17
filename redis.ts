@@ -5,6 +5,8 @@ import util from "util";
 import npmlog from "npmlog";
 import redis from "redis";
 
+import config from "./config";
+
 function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
     for (let i = 0; i < args.length; i++) {
         if (typeof args[i] == "string" && args[i].length > 50) {
@@ -20,7 +22,7 @@ function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
 let client: redis.RedisClient;
 
 async function init(): Promise<void> {
-    client = redis.createClient();
+    client = redis.createClient(config.get("redis"));
     if (!await ping()) {
         process.exit(1);
     }
