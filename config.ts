@@ -19,11 +19,12 @@ async function init(): Promise<void> {
         npmlog.info("config", "load(%j): err %s", filename, e.message);
         process.exit(1);
     }
+    npmlog.level = get("log_level", "silly");
     npmlog.info("config", "load(%j): ok", filename);
 }
 
-function get(key: string): any {
-    return config[key];
+function get<T>(key: string, fallback?: T): T {
+    return config[key] !== undefined ? config[key] : fallback;
 }
 
 export = {

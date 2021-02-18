@@ -4,6 +4,7 @@ import TelegramBot from "node-telegram-bot-api";
 import npmlog from "npmlog";
 
 import bot from "./bot";
+import config from "./config";
 import redis from "./redis";
 import i18n from "./i18n";
 
@@ -83,7 +84,7 @@ class Group {
             return;
         }
 
-        npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j) started", this.id, msg.message_id, user.id);
+        npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j) start", this.id, msg.message_id, user.id);
         await this.setKey(`user:${user.id}:pending`, "true");
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
 
@@ -398,9 +399,9 @@ class Group {
             }
         }
         const e = await bot.getChatMember(this.id, user);
-        if (e === undefined) {
+        if (e === undefined || e.status === "kicked" || e.status == "left") {
             r = "none";
-        } else if (e?.status === "creator" || e?.can_restrict_members) {
+        } else if (e.status === "creator" || e.can_restrict_members) {
             r = "admin";
         } else {
             r = "member";
@@ -450,7 +451,7 @@ class Group {
     private async getAction(): Promise<Action> {
         const s = await this.getKey("action");
         if (s === undefined) {
-            return "kick";
+            return config.get("default_action", "kick");
         }
         // TODO: type check
         return s as Action;
@@ -459,11 +460,11 @@ class Group {
     private async getTimeout(): Promise<number> {
         const s = await this.getKey("timeout");
         const t = Number.parseInt(s as string);
-        return Number.isNaN(t) ? 60 : t;
+        return Number.isNaN(t) ? config.get("default_timeout", 60) : t;
     }
 
     private async getLang(): Promise<string> {
-        return await this.getKey("lang") || "en_US";
+        return await this.getKey("lang") || config.get("default_lang", "en_US");
     }
 
     private async getKey(key: string): Promise<string | undefined> {

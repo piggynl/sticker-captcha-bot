@@ -10,4 +10,4 @@ FROM node:14-alpine
 
 COPY --from=builder /app /app
 
-CMD ["/usr/local/bin/node", "/app/config.json"]
+CMD ["/usr/local/bin/node", "/app/dist/index.js", "/app/config.json"]

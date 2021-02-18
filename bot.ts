@@ -29,7 +29,7 @@ let api: TelegramBotAPI;
 let me: TelegramBotAPI.User;
 
 async function init(): Promise<void> {
-    api = new TelegramBotAPI(config.get("token"), {
+    api = new TelegramBotAPI(config.get("token", ""), {
         request: {
             url: undefined as any as string,
             timeout: config.get("timeout"),
@@ -42,7 +42,7 @@ async function init(): Promise<void> {
         log("error", "init(): err %s", e);
         process.exit(1);
     }
-    log("info", "init(): ok @%s", me.username);
+    log("info", "init(): ok @%s(%j)", me.username, me.id);
 }
 
 function getAPI(): typeof api {

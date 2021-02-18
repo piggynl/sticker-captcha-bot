@@ -9,12 +9,15 @@ import redis from "./redis";
 
 Error.stackTraceLimit = Infinity;
 
-npmlog.level = "silly";
 npmlog.stream = process.stdout;
-npmlog.enableColor();
+
+async function sleep(time: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, time));
+}
 
 (async () => {
     await config.init();
+    await sleep(config.get("init_after", 0));
     await redis.init();
     await bot.init();
 

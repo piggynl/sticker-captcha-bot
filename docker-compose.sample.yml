@@ -1,0 +1,26 @@
+version: "3"
+
+networks:
+  sticker-captcha-bot:
+    external: false
+
+services:
+  redis:
+    image: redis:6-alpine
+    restart: always
+    command: /usr/local/bin/redis-server /etc/redis.conf
+    networks:
+      - sticker-captcha-bot
+    volumes:
+      - ./redis.conf:/etc/redis.conf:ro
+      - ./redis:/data
+  main:
+    build: .
+    image: sticker-captcha-bot
+    restart: always
+    depends_on:
+      - redis
+    networks:
+      - sticker-captcha-bot
+    volumes:
+      - ./config.json:/app/config.json:ro
