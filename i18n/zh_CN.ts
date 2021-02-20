@@ -42,7 +42,7 @@ export = {
     "sticker_captcha_bot.help": "<b>Sticker CAPTCHA Bot</b>",
     "template.help": "定制验证的提示模板需要了解一些变量：提及用户 =&gt; <code>$u</code>，仅通过 ID 提及用户 =&gt; <code>$i</code>，超时时间（秒）=&gt; <code>$t</code>，字符 <code>$</code> =&gt; <code>$$</code>。",
     "timeout.help": "/timeout [integer] - 查看或设置本群的验证超时时间",
-    "timeout.query": "本群的超时超时时间是 <b>%d 秒</b>。",
+    "timeout.query": "本群的超时时间是 <b>%d 秒</b>。",
     "timeout.notice": "<b>诶？这对于人类来说会不会有点短？</b>",
     "verbose.help": "/verbose [on|off] - 切换详细模式（保留所有消息）",
     "verbose.off": "详细模式<b>已关闭</b>。",
