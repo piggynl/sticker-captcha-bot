@@ -1,4 +1,4 @@
 {
   "token": "0000000000:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-  "redis": "redis://localhost:6379"
+  "redis": "redis://redis:6379"
 }

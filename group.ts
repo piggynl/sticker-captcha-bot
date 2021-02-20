@@ -278,11 +278,11 @@ class Group {
                 }
                 if (arg !== undefined) {
                     const x = Number.parseInt(arg);
-                    if (Number.isNaN(x) || x <= 0 || x >= 2147483648) {
+                    if (Number.isNaN(x) || x <= 0 || x >= 2147483.648) {
                         await this.send(await this.format("cmd.bad_param"), m.message_id);
                         break;
                     }
-                    await this.setKey("timeout", arg);
+                    await this.setKey("timeout", x.toString());
                 }
                 const x = await this.getTimeout();
                 let s = await this.format("timeout.query", x);

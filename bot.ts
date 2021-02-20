@@ -79,7 +79,7 @@ function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: string] {
     if (p === -1) {
         return [c];
     }
-    return [c, text.slice(p + 1)];
+    return [c, text.slice(p + 1).trim()];
 }
 
 async function send(chat: number, html: string, reply?: number): Promise<number> {
