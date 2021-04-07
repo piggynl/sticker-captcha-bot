@@ -5,8 +5,9 @@ import npmlog from "npmlog";
 
 import bot from "./bot";
 import config from "./config";
-import redis from "./redis";
 import i18n from "./i18n";
+import Mutex from "./mutex";
+import redis from "./redis";
 
 type Role = "none" | "member" | "admin";
 
@@ -32,9 +33,12 @@ class Group {
 
     private readonly resolvers: Map<number, (passed: boolean) => void>;
 
+    private readonly mutex: Mutex;
+
     public constructor(id: number) {
         this.id = id;
         this.resolvers = new Map();
+        this.mutex = new Mutex();
     }
 
     public async handleMessage(m: TelegramBot.Message): Promise<void> {
