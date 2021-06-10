@@ -6,11 +6,13 @@ import config from "../config";
 
 import en_US from "./en_US";
 import zh_CN from "./zh_CN";
+import zh_Peng from "./zh_Peng";
 
 const languages = new Map<string, Record<string, string>>();
 
 languages.set("en_US", en_US);
 languages.set("zh_CN", zh_CN);
+languages.set("zh_Peng", zh_Peng);
 
 function allLangs(): string {
     let res: string[] = [];
