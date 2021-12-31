@@ -27,7 +27,7 @@ export = {
     "onpass.default": "$u has passed the verification.",
     "onpass.help": "/onpass [string] - get or set the template of messages sent to users who have passed verification.",
     "onpass.query": "Current template of messages sent to users who have passed verification is:\n<pre>%s</pre>",
-    "open_source.help": "This bot is open sourced at https://github.com/piggy-moe/sticker-captcha-bot",
+    "open_source.help": "This bot is open sourced at https://github.com/piggynl/sticker-captcha-bot",
     "pass.help": "/pass - pass the verification for a user manually",
     "ping.help": "/ping - am I alive?",
     "ping.pong": "Pong! | %s",

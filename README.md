@@ -14,7 +14,7 @@ A simple Telegram bot which requires users to send any sticker after joining the
 
   - actions for failed users (kick/mute/ban)
 
-  - [various(?) display languages](https://github.com/piggy-moe/sticker-captcha-bot/tree/prod/i18n)
+  - [various(?) display languages](https://github.com/piggynl/sticker-captcha-bot/tree/prod/i18n)
 
   - the message sent to new users / passed users / failed users
 

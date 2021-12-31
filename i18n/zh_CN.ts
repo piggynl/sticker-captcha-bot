@@ -27,7 +27,7 @@ export = {
     "onpass.default": "$u 验证成功了。",
     "onpass.help": "/onpass [string] - 查看或设置对于验证通过用户发送消息的模板",
     "onpass.query": "当前对于验证通过用户发送消息的模板是：\n<pre>%s</pre>",
-    "open_source.help": "此项目开源于： https://github.com/piggy-moe/sticker-captcha-bot",
+    "open_source.help": "此项目开源于： https://github.com/piggynl/sticker-captcha-bot",
     "pass.help": "/pass - 回复某用户的消息或者 Ta 的入群消息，使该待验证用户跳过验证",
     "ping.help": "/ping - 我还活着吗？",
     "ping.pong": "Pong! | %s",
