@@ -137,12 +137,7 @@ class Group {
             await this.delMsg(msg.message_id);
             return;
         }
-        const g = await this.send(await this.render(await this.getTemplate("onpass"), user), msg.message_id);
-        if (await this.existsKey("verbose")) {
-            return;
-        }
-        await this.sleep();
-        await this.delMsg(g);
+        await this.send(await this.render(await this.getTemplate("onpass"), user), msg.message_id);
     }
 
     private async onFail(user: TelegramBot.User): Promise<void> {
