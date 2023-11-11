@@ -4,7 +4,7 @@ COPY . /app
 
 WORKDIR /app
 
-RUN npm i -g typescript && npm i && npm run build
+RUN npm i -g typescript@4.3 && npm i && npm run build
 
 FROM node:14-alpine
 
