@@ -6,7 +6,7 @@ networks:
 
 services:
   redis:
-    image: redis:6-alpine
+    image: redis:7-alpine
     restart: always
     command: /usr/local/bin/redis-server /etc/redis.conf
     networks:

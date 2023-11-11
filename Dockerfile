@@ -1,12 +1,12 @@
-FROM node:14-alpine AS builder
+FROM node:20-alpine AS builder
 
 COPY . /app
 
 WORKDIR /app
 
-RUN npm i -g typescript@4.3 && npm i && npm run build
+RUN npm i && npm run build
 
-FROM node:14-alpine
+FROM node:20-alpine
 
 COPY --from=builder /app /app
 

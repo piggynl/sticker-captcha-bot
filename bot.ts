@@ -121,7 +121,9 @@ async function mute(chat: number, user: number): Promise<boolean> {
     let r: boolean;
     try {
         r = await api.restrictChatMember(chat, user as any, {
-            can_send_messages: false,
+            permissions: {
+                can_send_messages: false
+            }
         });
     } catch (e) {
         const d = (Date.now() - t).toString() + "ms";
@@ -137,7 +139,7 @@ async function ban(chat: number, user: number): Promise<boolean> {
     const t = Date.now();
     let r: boolean;
     try {
-        r = await api.kickChatMember(chat, user as any);
+        r = await api.banChatMember(chat, user as any);
     } catch (e) {
         const d = (Date.now() - t).toString() + "ms";
         log("warn", "ban(chat=%j, user=%j): %s err %s", chat, user, d, e);
