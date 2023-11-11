@@ -15,7 +15,7 @@ async function init(): Promise<void> {
     try {
         const file = await fs.readFile(filename, "utf-8");
         config = JSON.parse(file);
-    } catch (e) {
+    } catch (e: any) {
         npmlog.info("config", "load(%j): err %s", filename, e.message);
         process.exit(1);
     }
