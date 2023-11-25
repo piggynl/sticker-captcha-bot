@@ -3,7 +3,7 @@ import "source-map-support/register";
 import npmlog from "npmlog";
 import { Redis } from "ioredis";
 
-import config from "./config";
+import * as config from "./config.js";
 
 function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
     for (let i = 0; i < args.length; i++) {
@@ -19,14 +19,14 @@ function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
 
 let client: Redis;
 
-async function init(): Promise<void> {
+export async function init(): Promise<void> {
     client = new Redis(config.get("redis"));
     if (!await ping()) {
         process.exit(1);
     }
 }
 
-async function ping(): Promise<boolean> {
+export async function ping(): Promise<boolean> {
     let r;
     try {
         r = await client.ping();
@@ -38,7 +38,7 @@ async function ping(): Promise<boolean> {
     return true;
 }
 
-async function get(k: string): Promise<string | undefined> {
+export async function get(k: string): Promise<string | undefined> {
     let r: string | null;
     try {
         r = await client.get(k);
@@ -51,7 +51,7 @@ async function get(k: string): Promise<string | undefined> {
     return v;
 }
 
-async function set(k: string, v: string, ttl?: number): Promise<void> {
+export async function set(k: string, v: string, ttl?: number): Promise<void> {
     try {
         if (ttl === undefined) {
             client.set(k, v);
@@ -65,7 +65,7 @@ async function set(k: string, v: string, ttl?: number): Promise<void> {
     log("silly", "set(%s, %j, ttl=%j): ok", k, v, ttl);
 }
 
-async function del(k: string): Promise<void> {
+export async function del(k: string): Promise<void> {
     let r;
     try {
         r = await client.del(k);
@@ -76,7 +76,7 @@ async function del(k: string): Promise<void> {
     log("silly", "del(%s): ok %j", k, r > 0);
 }
 
-async function exists(k: string): Promise<boolean> {
+export async function exists(k: string): Promise<boolean> {
     let r;
     try {
         r = await client.exists(k);
@@ -88,12 +88,3 @@ async function exists(k: string): Promise<boolean> {
     log("silly", "exists(%s): ok %j", k, v);
     return v;
 }
-
-export = {
-    init,
-    ping,
-    get,
-    set,
-    del,
-    exists,
-};

@@ -1,12 +1,12 @@
 import "source-map-support/register";
 
-import fs from "fs/promises";
+import fs from "node:fs/promises";
 
 import npmlog from "npmlog";
 
 let config: any;
 
-async function init(): Promise<void> {
+export async function init(): Promise<void> {
     if (process.argv.length < 3) {
         npmlog.error("sticker-captcha-bot", `Usage: %j <config>`, process.argv[1]);
         process.exit(1);
@@ -23,11 +23,6 @@ async function init(): Promise<void> {
     npmlog.info("config", "load(%j): ok", filename);
 }
 
-function get<T>(key: string, fallback?: T): T {
+export function get<T>(key: string, fallback?: T): T {
     return config[key] !== undefined ? config[key] : fallback;
 }
-
-export = {
-    init,
-    get,
-};

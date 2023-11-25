@@ -3,17 +3,17 @@ import "source-map-support/register";
 import TelegramBot from "node-telegram-bot-api";
 import npmlog from "npmlog";
 
-import bot from "./bot";
-import config from "./config";
-import i18n from "./i18n";
-import Mutex from "./mutex";
-import redis from "./redis";
+import * as bot from "./bot.js";
+import * as config from "./config.js";
+import * as i18n from "./i18n/index.js";
+import Mutex from "./mutex.js";
+import * as redis from "./redis.js";
 
 type Role = "none" | "member" | "admin";
 
 type Action = "kick" | "mute" | "ban";
 
-class Group {
+export default class Group {
 
     private static index = new Map<number, Group>();
 
@@ -514,5 +514,3 @@ class Group {
     }
 
 };
-
-export = Group;

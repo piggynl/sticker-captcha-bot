@@ -1,6 +1,6 @@
 import "source-map-support/register";
 
-export = {
+export default {
     "action.ban": "ban",
     "action.help": "/action [kick|mute|ban] - get or set the action for users who failed the verification",
     "action.kick": "kick",

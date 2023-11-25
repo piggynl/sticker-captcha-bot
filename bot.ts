@@ -4,7 +4,7 @@ import TelegramBotAPI from "node-telegram-bot-api";
 
 import npmlog from "npmlog";
 
-import config from "./config";
+import * as config from "./config.js";
 
 function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
     for (let i = 0; i < args.length; i++) {
@@ -18,7 +18,7 @@ function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
     npmlog[level]("bot", msg, ...args);
 }
 
-function escapeHTML(s: string): string {
+export function escapeHTML(s: string): string {
     return s
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -28,7 +28,7 @@ function escapeHTML(s: string): string {
 let api: TelegramBotAPI;
 let me: TelegramBotAPI.User;
 
-async function init(): Promise<void> {
+export async function init(): Promise<void> {
     api = new TelegramBotAPI(config.get("token", ""), {
         request: {
             url: undefined as any as string,
@@ -45,15 +45,15 @@ async function init(): Promise<void> {
     log("info", "init(): ok @%s(%j)", me.username, me.id);
 }
 
-function getAPI(): typeof api {
+export function getAPI(): typeof api {
     return api;
 }
 
-function getMe(): typeof me {
+export function getMe(): typeof me {
     return me;
 }
 
-function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: string] {
+export function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: string] {
     const text = m.text;
     if (text === undefined) {
         return [];
@@ -82,7 +82,7 @@ function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: string] {
     return [c, text.slice(p + 1).trim()];
 }
 
-async function send(chat: number, html: string, reply?: number): Promise<number> {
+export async function send(chat: number, html: string, reply?: number): Promise<number> {
     const t = Date.now();
     let m: TelegramBotAPI.Message;
     try {
@@ -101,7 +101,7 @@ async function send(chat: number, html: string, reply?: number): Promise<number>
     return m.message_id;
 }
 
-async function del(chat: number, msg: number): Promise<boolean> {
+export async function del(chat: number, msg: number): Promise<boolean> {
     const t = Date.now();
     let r: boolean;
     try {
@@ -116,7 +116,7 @@ async function del(chat: number, msg: number): Promise<boolean> {
     return r;
 }
 
-async function mute(chat: number, user: number): Promise<boolean> {
+export async function mute(chat: number, user: number): Promise<boolean> {
     const t = Date.now();
     let r: boolean;
     try {
@@ -135,7 +135,7 @@ async function mute(chat: number, user: number): Promise<boolean> {
     return r;
 }
 
-async function ban(chat: number, user: number): Promise<boolean> {
+export async function ban(chat: number, user: number): Promise<boolean> {
     const t = Date.now();
     let r: boolean;
     try {
@@ -150,7 +150,7 @@ async function ban(chat: number, user: number): Promise<boolean> {
     return r;
 }
 
-async function unban(chat: number, user: number): Promise<boolean> {
+export async function unban(chat: number, user: number): Promise<boolean> {
     const t = Date.now();
     let r: boolean;
     try {
@@ -166,7 +166,7 @@ async function unban(chat: number, user: number): Promise<boolean> {
 }
 
 
-async function getChatMember(chat: number, user: number): Promise<TelegramBotAPI.ChatMember | undefined> {
+export async function getChatMember(chat: number, user: number): Promise<TelegramBotAPI.ChatMember | undefined> {
     const t = Date.now();
     let r: TelegramBotAPI.ChatMember;
     try {
@@ -181,7 +181,7 @@ async function getChatMember(chat: number, user: number): Promise<TelegramBotAPI
     return r;
 }
 
-async function leaveChat(chat: number): Promise<boolean> {
+export async function leaveChat(chat: number): Promise<boolean> {
     const t = Date.now();
     let r: boolean;
     try {
@@ -194,19 +194,4 @@ async function leaveChat(chat: number): Promise<boolean> {
     const d = (Date.now() - t).toString() + "ms";
     log("verbose", "leave(chat=%j): %s ok %j", chat, d, r);
     return r;
-}
-
-export = {
-    escapeHTML,
-    init,
-    getAPI,
-    getMe,
-    parseCommand,
-    send,
-    del,
-    mute,
-    ban,
-    unban,
-    getChatMember,
-    leaveChat,
 }

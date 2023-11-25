@@ -1,6 +1,6 @@
 import "source-map-support/register";
 
-export = {
+export default {
     "action.ban": "封禁",
     "action.help": "/action [kick|mute|ban] - 查看或设置对验证失败用户的措施",
     "action.kick": "踢出",

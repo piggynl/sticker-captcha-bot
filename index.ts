@@ -2,10 +2,10 @@ import "source-map-support/register";
 
 import npmlog from "npmlog";
 
-import bot from "./bot";
-import config from "./config";
-import Group from "./group";
-import redis from "./redis";
+import * as bot from "./bot.js";
+import * as config from "./config.js";
+import Group from "./group.js";
+import * as redis from "./redis.js";
 
 Error.stackTraceLimit = Infinity;
 

@@ -1,6 +1,6 @@
 import "source-map-support/register";
 
-class Mutex {
+export default class Mutex {
 
     private avail: boolean;
 
@@ -35,5 +35,3 @@ class Mutex {
     }
 
 }
-
-export = Mutex;
