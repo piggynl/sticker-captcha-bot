@@ -1,6 +1,6 @@
 import "source-map-support/register";
 
-export default {
+const translations = {
     "action.ban": "ban",
     "action.help": "/action [kick|mute|ban] - get or set the action for users who failed the verification",
     "action.kick": "kick",
@@ -48,3 +48,7 @@ export default {
     "verbose.off": "Verbose mode is <b>off</b>.",
     "verbose.on": "Verbose mode is <b>on</b>.",
 };
+
+export default translations;
+
+export type TranslationKey = keyof typeof translations;

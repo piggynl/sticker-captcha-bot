@@ -1,5 +1,7 @@
 import "source-map-support/register";
 
+import { TranslationKey } from "./en_US.js";
+
 export default {
     "action.ban": "封禁",
     "action.help": "/action [kick|mute|ban] - 查看或设置对验证失败用户的措施",
@@ -47,4 +49,4 @@ export default {
     "verbose.help": "/verbose [on|off] - 切换详细模式（保留所有消息）",
     "verbose.off": "详细模式<b>已关闭</b>。",
     "verbose.on": "详细模式<b>已开启</b>。",
-};
+} as Record<TranslationKey, string>;

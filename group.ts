@@ -170,7 +170,7 @@ export default class Group {
                 if (!await this.checkFromAdmin(m, true)) {
                     break;
                 }
-                const help = [
+                const help: ("" | i18n.TranslationKey)[] = [
                     "sticker_captcha_bot.help",
                     "",
                     "help.help",
@@ -200,8 +200,8 @@ export default class Group {
                     "open_source.help",
                 ];
                 const lang = await this.getLang()
-                await this.send(help.map((l: string): string => {
-                    return l.length === 0 ? "" : i18n.format(lang, l);
+                await this.send(help.map((l: "" | i18n.TranslationKey): string => {
+                    return l === "" ? "" : i18n.format(lang, l);
                 }).join("\n"), m.message_id);
                 break;
 
@@ -267,7 +267,7 @@ export default class Group {
                     }
                     await this.setKey("action", arg);
                 }
-                const v = await this.format("action." + await this.getAction());
+                const v = await this.format(`action.${await this.getAction()}`);
                 await this.send(await this.format("action.query", v), m.message_id);
                 break;
 
@@ -509,7 +509,7 @@ export default class Group {
         return bot.leaveChat(this.id);
     }
 
-    private async format(key: string, ...args: any[]): Promise<string> {
+    private async format(key: i18n.TranslationKey, ...args: any[]): Promise<string> {
         return i18n.format(await this.getLang(), key, ...args);
     }
 
