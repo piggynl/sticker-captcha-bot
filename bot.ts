@@ -171,10 +171,14 @@ export async function getChatMember(chat: number, user: number): Promise<Telegra
     let r: TelegramBotAPI.ChatMember;
     try {
         r = await api.getChatMember(chat, user as any);
-    } catch (e) {
+    } catch (e: unknown) {
         const d = (Date.now() - t).toString() + "ms";
         log("warn", "getmember(chat=%j, user=%j): %s err %s", chat, user, d, e);
-        return undefined;
+        if (typeof e === "object" && e !== null && "code" in e && e.code === "ETELEGRAM") {
+            return undefined;
+        } else {
+            throw e;
+        }
     }
     const d = (Date.now() - t).toString() + "ms";
     log("verbose", "getmember(chat=%j, user=%j): %s ok (...)", chat, user, d);

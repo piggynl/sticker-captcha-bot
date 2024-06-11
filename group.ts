@@ -105,7 +105,7 @@ export default class Group {
                         const s = "CAACAgUAAxkBAAEI_IFgKqYpeH28bSvB_qd3ybC5vS-RxwACsgADVl_YH824--1Q953HHgQ";
                         const w = await bot.getAPI().sendSticker(this.id, s);
                         await this.onPass(w, w.from as TelegramBot.User);
-                    } catch {}
+                    } catch { }
                 }
             }),
         ]);
@@ -397,7 +397,13 @@ export default class Group {
                 return r as Role;
             }
         }
-        const e = await bot.getChatMember(this.id, user);
+        let e;
+        while (true) {
+            try {
+                e = await bot.getChatMember(this.id, user);
+                break;
+            } catch { }
+        }
         if (e === undefined || e.status === "kicked" || e.status == "left") {
             r = "none";
         } else if (e.status === "creator" || e.can_restrict_members) {
