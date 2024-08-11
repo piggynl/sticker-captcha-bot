@@ -1,6 +1,7 @@
 {
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@9.5.0",
   "dependencies": {
     "ioredis": "^5.3.2",
     "node-telegram-bot-api": "^0.64.0",
