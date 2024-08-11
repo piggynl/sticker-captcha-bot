@@ -1,4 +1,4 @@
-import "source-map-support/register";
+import "source-map-support/register.js";
 
 import npmlog from "npmlog";
 

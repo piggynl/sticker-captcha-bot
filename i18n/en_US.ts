@@ -1,4 +1,4 @@
-import "source-map-support/register";
+import "source-map-support/register.js";
 
 const translations = {
     "action.ban": "ban",
