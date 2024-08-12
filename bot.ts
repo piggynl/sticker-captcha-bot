@@ -174,7 +174,7 @@ export async function getChatMember(chat: number, user: number): Promise<Telegra
         }
     }
     const dur_ms = Date.now() - begin;
-    botLogger.verbose("getmember()", { chat, user, dur_ms, ok: true, member });
+    botLogger.verbose("getmember()", { chat, user, dur_ms, ok: true, member_status: member.status });
     return member;
 }
 
