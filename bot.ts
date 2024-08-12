@@ -2,21 +2,11 @@ import "source-map-support/register.js";
 
 import TelegramBotAPI from "node-telegram-bot-api";
 
-import npmlog from "npmlog";
+import { logger } from "./log.js";
 
 import * as config from "./config.js";
 
-function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
-    for (let i = 0; i < args.length; i++) {
-        if (typeof args[i] == "string" && args[i].length > 50) {
-            args[i] = "(...)";
-        }
-        if (args[i] instanceof Error) {
-            args[i] = args[i].message;
-        }
-    }
-    npmlog[level]("bot", msg, ...args);
-}
+const botLogger = logger.child({ scope: "bot" });
 
 export function escapeHTML(s: string): string {
     return s
@@ -36,13 +26,17 @@ export async function init(): Promise<void> {
             proxy: config.get("proxy"),
         },
     });
+    const begin = Date.now();
     try {
         me = await api.getMe();
-    } catch (e) {
-        log("error", "init(): err %s", e);
+    } catch (err) {
+        const dur_ms = Date.now() - begin;
+        botLogger.error("init()", { ok: false, dur_ms, err });
         process.exit(1);
     }
-    log("info", "init(): ok @%s(%j)", me.username, me.id);
+    const dur_ms = Date.now() - begin;
+    const { username, first_name } = me
+    botLogger.info("init()", { ok: true, dur_ms, username, first_name, me });
 }
 
 export function getAPI(): typeof api {
@@ -59,9 +53,9 @@ export function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: st
         return [];
     }
     let c: string | undefined;
-    for (const e of (m.entities || [])) {
-        if (e.type === "bot_command" && e.offset === 0) {
-            c = text.slice(1, e.length);
+    for (const err of (m.entities || [])) {
+        if (err.type === "bot_command" && err.offset === 0) {
+            c = text.slice(1, err.length);
         }
     }
     if (c === undefined) {
@@ -83,7 +77,7 @@ export function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: st
 }
 
 export async function send(chat: number, html: string, reply?: number): Promise<number> {
-    const t = Date.now();
+    const begin = Date.now();
     let m: TelegramBotAPI.Message;
     try {
         m = await api.sendMessage(chat, html, {
@@ -91,111 +85,110 @@ export async function send(chat: number, html: string, reply?: number): Promise<
             parse_mode: "HTML",
             reply_to_message_id: reply,
         });
-    } catch (e) {
-        const d = (Date.now() - t).toString() + "ms";
-        log("warn", "send(chat=%j, html=(...), reply=%j): %s err %s", chat, reply, d, e);
+    } catch (err) {
+        const dur_ms = Date.now() - begin;
+        botLogger.warn("send()", { chat, html, reply, ok: false, dur_ms, err });
         return 0;
     }
-    const d = (Date.now() - t).toString() + "ms";
-    log("verbose", "send(chat=%j, html=(...), reply=%j): %s ok %j", chat, reply, d, m.message_id);
+    const dur_ms = Date.now() - begin;
+    botLogger.verbose("send()", { chat, html, reply, ok: true, dur_ms, msg: m.message_id });
     return m.message_id;
 }
 
 export async function del(chat: number, msg: number): Promise<boolean> {
-    const t = Date.now();
-    let r: boolean;
+    const begin = Date.now();
+    let deleted: boolean;
     try {
-        r = await api.deleteMessage(chat, msg as any);
-    } catch (e) {
-        const d = (Date.now() - t).toString() + "ms";
-        log("warn", "del(chat=%j, msg=%j): %s err %s", chat, msg, d, e);
+        deleted = await api.deleteMessage(chat, msg as any);
+    } catch (err) {
+        const dur_ms = Date.now() - begin;
+        botLogger.warn("del()", { chat, msg, ok: false, dur_ms, err });
         return false;
     }
-    const d = (Date.now() - t).toString() + "ms";
-    log("verbose", "del(chat=%j, msg=%j): %s ok %j", chat, msg, d, r);
-    return r;
+    const dur_ms = Date.now() - begin;
+    botLogger.verbose("del()", { chat, msg, ok: true, dur_ms, deleted });
+    return deleted;
 }
 
 export async function mute(chat: number, user: number): Promise<boolean> {
-    const t = Date.now();
-    let r: boolean;
+    const begin = Date.now();
+    let muted: boolean;
     try {
-        r = await api.restrictChatMember(chat, user as any, {
+        muted = await api.restrictChatMember(chat, user as any, {
             permissions: {
                 can_send_messages: false
             }
         });
-    } catch (e) {
-        const d = (Date.now() - t).toString() + "ms";
-        log("warn", "mute(chat=%j, user=%j): %s err %s", chat, user, d, e);
+    } catch (err) {
+        const dur_ms = Date.now() - begin;
+        botLogger.warn("mute()", { chat, user, dur_ms, ok: false, err });
         return false;
     }
-    const d = (Date.now() - t).toString() + "ms";
-    log("verbose", "mute(chat=%j, user=%j): %s ok %j", chat, user, d, r);
-    return r;
+    const dur_ms = Date.now() - begin;
+    botLogger.verbose("mute()", { chat, user, dur_ms, ok: true, muted });
+    return muted;
 }
 
 export async function ban(chat: number, user: number): Promise<boolean> {
-    const t = Date.now();
-    let r: boolean;
+    const begin = Date.now();
+    let banned: boolean;
     try {
-        r = await api.banChatMember(chat, user as any);
-    } catch (e) {
-        const d = (Date.now() - t).toString() + "ms";
-        log("warn", "ban(chat=%j, user=%j): %s err %s", chat, user, d, e);
+        banned = await api.banChatMember(chat, user as any);
+    } catch (err) {
+        const dur_ms = Date.now() - begin;
+        botLogger.warn("ban()", { chat, user, dur_ms, ok: false, err });
         return false;
     }
-    const d = (Date.now() - t).toString() + "ms";
-    log("verbose", "ban(chat=%j, user=%j): %s ok %j", chat, user, d, r);
-    return r;
+    const dur_ms = Date.now() - begin;
+    botLogger.verbose("mute()", { chat, user, dur_ms, ok: true, banned });
+    return banned;
 }
 
 export async function unban(chat: number, user: number): Promise<boolean> {
-    const t = Date.now();
-    let r: boolean;
+    const begin = Date.now();
+    let unbanned: boolean;
     try {
-        r = await api.unbanChatMember(chat, user as any);
-    } catch (e) {
-        const d = (Date.now() - t).toString() + "ms";
-        log("warn", "unban(chat=%j, user=%j): %s err %s", chat, user, d, e);
+        unbanned = await api.unbanChatMember(chat, user as any);
+    } catch (err) {
+        const dur_ms = Date.now() - begin;
+        botLogger.warn("unban()", { chat, user, dur_ms, ok: false, err });
         return false;
     }
-    const d = (Date.now() - t).toString() + "ms";
-    log("verbose", "unban(chat=%j, user=%j): %s ok %j", chat, user, d, r);
-    return r;
+    const dur_ms = Date.now() - begin;
+    botLogger.verbose("unban()", { chat, user, dur_ms, ok: true, unbanned });
+    return unbanned;
 }
 
-
 export async function getChatMember(chat: number, user: number): Promise<TelegramBotAPI.ChatMember | undefined> {
-    const t = Date.now();
-    let r: TelegramBotAPI.ChatMember;
+    const begin = Date.now();
+    let member: TelegramBotAPI.ChatMember;
     try {
-        r = await api.getChatMember(chat, user as any);
-    } catch (e: unknown) {
-        const d = (Date.now() - t).toString() + "ms";
-        log("warn", "getmember(chat=%j, user=%j): %s err %s", chat, user, d, e);
-        if (typeof e === "object" && e !== null && "code" in e && e.code === "ETELEGRAM") {
+        member = await api.getChatMember(chat, user as any);
+    } catch (err: unknown) {
+        const dur_ms = Date.now() - begin;
+        botLogger.warn("getmember()", { chat, user, dur_ms, ok: false, err });
+        if (typeof err === "object" && err !== null && "code" in err && err.code === "ETELEGRAM") {
             return undefined;
         } else {
-            throw e;
+            throw err;
         }
     }
-    const d = (Date.now() - t).toString() + "ms";
-    log("verbose", "getmember(chat=%j, user=%j): %s ok (...)", chat, user, d);
-    return r;
+    const dur_ms = Date.now() - begin;
+    botLogger.verbose("getmember()", { chat, user, dur_ms, ok: true, member });
+    return member;
 }
 
 export async function leaveChat(chat: number): Promise<boolean> {
-    const t = Date.now();
-    let r: boolean;
+    const begin = Date.now();
+    let left: boolean;
     try {
-        r = await api.leaveChat(chat);
-    } catch (e) {
-        const d = (Date.now() - t).toString() + "ms";
-        log("warn", "leave(chat=%j): %s err %s", chat, d, e);
+        left = await api.leaveChat(chat);
+    } catch (err) {
+        const dur_ms = Date.now() - begin;
+        botLogger.warn("leave()", { chat, dur_ms, ok: false, err });
         return false;
     }
-    const d = (Date.now() - t).toString() + "ms";
-    log("verbose", "leave(chat=%j): %s ok %j", chat, d, r);
-    return r;
+    const dur_ms = Date.now() - begin;
+    botLogger.verbose("leave()", { chat, dur_ms, ok: true, left });
+    return left;
 }

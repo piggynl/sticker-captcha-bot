@@ -1,16 +1,11 @@
 import "source-map-support/register.js";
 
-import npmlog from "npmlog";
-
 import * as bot from "./bot.js";
 import * as config from "./config.js";
 import Group from "./group.js";
 import * as redis from "./redis.js";
 
 Error.stackTraceLimit = Infinity;
-
-npmlog.stream = process.stdout;
-npmlog.enableColor();
 
 async function sleep(time: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, time));

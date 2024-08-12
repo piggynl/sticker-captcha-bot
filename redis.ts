@@ -1,21 +1,11 @@
 import "source-map-support/register.js";
 
-import npmlog from "npmlog";
 import { Redis } from "ioredis";
 
 import * as config from "./config.js";
+import { logger } from "./log.js";
 
-function log(level: npmlog.LogLevels, msg: string, ...args: any[]): void {
-    for (let i = 0; i < args.length; i++) {
-        if (typeof args[i] == "string" && args[i].length > 50) {
-            args[i] = "(...)";
-        }
-        if (args[i] instanceof Error) {
-            args[i] = args[i].message;
-        }
-    }
-    npmlog[level]("redis", msg, ...args);
-}
+const redisLogger = logger.child({ scope: "redis" });
 
 let client: Redis;
 
@@ -30,61 +20,61 @@ export async function ping(): Promise<boolean> {
     let r;
     try {
         r = await client.ping();
-    } catch (e) {
-        log("error", "ping(): err %s", e);
+    } catch (err) {
+        redisLogger.error("ping()", { ok: false, error: err });
         return false;
     }
-    log("silly", "ping(): ok");
+    redisLogger.debug("ping()", { ok: true });
     return true;
 }
 
-export async function get(k: string): Promise<string | undefined> {
+export async function get(key: string): Promise<string | undefined> {
     let r: string | null;
     try {
-        r = await client.get(k);
-    } catch (e) {
-        log("silly", "get(%s): err %s", k, e);
+        r = await client.get(key);
+    } catch (err) {
+        redisLogger.debug("get()", { key, ok: false, err });
         return undefined;
     }
-    const v = r === null ? undefined : r;
-    log("silly", "get(%s): ok %j", k, v);
-    return v;
+    const val = r === null ? undefined : r;
+    redisLogger.debug("get()", { key, ok: true, val });
+    return val;
 }
 
-export async function set(k: string, v: string, ttl?: number): Promise<void> {
+export async function set(key: string, val: string, ttl?: number): Promise<void> {
     try {
         if (ttl === undefined) {
-            client.set(k, v);
+            client.set(key, val);
         } else {
-            client.set(k, v, "EX", ttl);
+            client.set(key, val, "EX", ttl);
         }
-    } catch (e) {
-        log("silly", "set(%s, %j, ttl=%j): err %s", k, v, ttl, e);
+    } catch (err) {
+        redisLogger.debug("set()", { key, val, ttl, ok: false, err });
         return;
     }
-    log("silly", "set(%s, %j, ttl=%j): ok", k, v, ttl);
+    redisLogger.debug("set()", { key, val, ttl, ok: true });
 }
 
-export async function del(k: string): Promise<void> {
+export async function del(key: string): Promise<void> {
     let r;
     try {
-        r = await client.del(k);
-    } catch (e) {
-        log("silly", "del(%s): err %s", k, e);
+        r = await client.del(key);
+    } catch (err) {
+        redisLogger.debug("del()", { key, ok: false, err });
         return;
     }
-    log("silly", "del(%s): ok %j", k, r > 0);
+    redisLogger.debug("del()", { key, ok: true, deleted: r > 0 });
 }
 
-export async function exists(k: string): Promise<boolean> {
+export async function exists(key: string): Promise<boolean> {
     let r;
     try {
-        r = await client.exists(k);
-    } catch (e) {
-        log("silly", "exists(%s): err %s", k, e);
+        r = await client.exists(key);
+    } catch (err) {
+        redisLogger.debug("exists()", { key, ok: false, err });
         return false;
     }
-    const v = r > 0;
-    log("silly", "exists(%s): ok %j", k, v);
-    return v;
+    const exists = r > 0;
+    redisLogger.debug("exists()", { key, ok: true, exists });
+    return exists;
 }

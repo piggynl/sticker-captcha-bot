@@ -1,13 +1,16 @@
 import "source-map-support/register.js";
 
 import TelegramBot from "node-telegram-bot-api";
-import npmlog from "npmlog";
 
 import * as bot from "./bot.js";
 import * as config from "./config.js";
 import * as i18n from "./i18n/index.js";
 import Mutex from "./mutex.js";
 import * as redis from "./redis.js";
+import { logger } from "./log.js";
+
+const botLogger = logger.child({ scope: "bot" });
+const groupLogger = logger.child({ scope: "group" });
 
 type Role = "none" | "member" | "admin";
 
@@ -20,12 +23,12 @@ export default class Group {
     public static get(id: number): Group {
         let g = Group.index.get(id);
         if (g !== undefined) {
-            npmlog.silly("group", "get(%j): ok loaded", id);
+            groupLogger.silly("get()", { chat: id, status: "loaded" });
             return g;
         }
         g = new Group(id);
         Group.index.set(id, g);
-        npmlog.silly("group", "get(%j): ok stored", id);
+        groupLogger.silly("get()", { chat: id, status: "stored" });
         return g;
     }
 
@@ -42,7 +45,7 @@ export default class Group {
     }
 
     public async handleMessage(m: TelegramBot.Message): Promise<void> {
-        npmlog.verbose("bot", "(update, chat=%j, msg=%j)", m.chat.id, m.message_id);
+        botLogger.verbose("update", { chat: m.chat.id, msg: m.message_id });
         for (const u of (m.new_chat_members || [])) {
             await this.delKey(`user:${u.id}:role`);
             if (u.id === bot.getMe().id) {
@@ -84,11 +87,11 @@ export default class Group {
 
     private async onJoin(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
         if (await this.existsKey(`user:${user.id}:pending`)) {
-            npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j) dup", this.id, msg.message_id, user.id);
+            groupLogger.info("onjoin", { chat: this.id, msg: msg.message_id, user: user.id, status: "dup" });
             return;
         }
 
-        npmlog.info("group", "(group=%j).onjoin(msg=%j, user=%j) start", this.id, msg.message_id, user.id);
+        groupLogger.info("onjoin", { chat: this.id, msg: msg.message_id, user: user.id, status: "start" });
         await this.setKey(`user:${user.id}:pending`, "true");
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
 
@@ -127,7 +130,7 @@ export default class Group {
         if (!await this.existsKey(`user:${user.id}:pending`)) {
             return;
         }
-        npmlog.info("group", "(group=%j).onpass(msg=%j, user=%j)", this.id, msg.message_id, user.id);
+        groupLogger.info("onpass", { chat: this.id, msg: msg.message_id, user: user.id });
         await this.delKey(`user:${user.id}:pending`);
         const resolve = this.resolvers.get(user.id);
         if (resolve !== undefined) {
@@ -144,7 +147,7 @@ export default class Group {
         if (!await this.existsKey(`user:${user.id}:pending`)) {
             return;
         }
-        npmlog.info("group", "(group=%j).onfail(user=%j)", this.id, user.id);
+        groupLogger.info("onpass", { chat: this.id, user: user.id });
         await this.delKey(`user:${user.id}:pending`);
         const resolve = this.resolvers.get(user.id);
         if (resolve !== undefined) {
