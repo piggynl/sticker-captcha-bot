@@ -1,12 +1,12 @@
-FROM node:20-alpine AS builder
+FROM node:22-slim AS builder
 
 COPY . /app
 
 WORKDIR /app
 
-RUN npm i && npm run build
+RUN corepack enable && pnpm install && npm run build
 
-FROM node:20-alpine
+FROM node:22-slim
 
 COPY --from=builder /app /app
 
