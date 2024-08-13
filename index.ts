@@ -5,6 +5,7 @@ import * as config from "./config.js";
 import Group from "./group.js";
 import * as redis from "./redis.js";
 import { logger } from "./log.js";
+import TelegramBot from "node-telegram-bot-api";
 
 Error.stackTraceLimit = Infinity;
 
@@ -20,23 +21,29 @@ async function sleep(time: number): Promise<void> {
     await redis.init();
     await bot.init();
 
-    let lastUpdateID = -1;
+    let last_update_id = -1;
     while (true) {
+        const offset = last_update_id + 1;
+        let updates: TelegramBot.Update[];
         try {
-            const updates = await bot.getAPI().getUpdates({
+            updates = await bot.getAPI().getUpdates({
                 allowed_updates: ["message"],
-                offset: lastUpdateID + 1,
+                offset,
                 timeout: 50,
             });
+        } catch (err) {
+            botLogger.info("getupdates()", { offset, ok: false, err });
+            continue;
+        }
+        if (updates.length > 0) {
+            last_update_id = updates[updates.length - 1].update_id;
+        }
+        botLogger.info("getupdates()", { offset, ok: true, last_update_id: last_update_id });
 
-            for (const upd of updates) {
-                lastUpdateID = upd.update_id;
-                const m = upd.message!;
-                const g = Group.get(m.chat.id);
-                g.pushMessage(m);
-            }
-
-            botLogger.info("getupdate()", { last_update_id: lastUpdateID });
-        } catch {}
+        for (const upd of updates) {
+            const m = upd.message!;
+            const g = Group.get(m.chat.id);
+            g.pushMessage(m);
+        }
     }
 })();

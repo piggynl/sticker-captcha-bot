@@ -8,7 +8,6 @@ import * as i18n from "./i18n/index.js";
 import * as redis from "./redis.js";
 import { logger } from "./log.js";
 
-const botLogger = logger.child({ scope: "bot" });
 const groupLogger = logger.child({ scope: "group" });
 
 type Role = "none" | "member" | "admin";
