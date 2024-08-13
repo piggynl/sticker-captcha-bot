@@ -16,7 +16,7 @@ export default {
     "cmd.not_in_group": "请在群组中使用此命令。",
     "debug.help": "/debug [on|off] - 切换调试模式（在日志中记录更多信息用于调试）",
     "debug.off": "调试模式<b>已关闭</b>.",
-    "debug.on": "调试模式<b>已开启/b>.",
+    "debug.on": "调试模式<b>已开启</b>.",
     "disable.help": "/disable - 在本群禁用此机器人",
     "enable.help": "/enable - 在本群启用此机器人",
     "fail.help": "/fail - 回复某用户的消息或者 Ta 的入群消息，强制使该待验证用户验证失败",
