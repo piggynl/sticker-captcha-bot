@@ -308,14 +308,21 @@ export default class Group {
 
             case "verbose":
             case "quiet":
+            case "debug":
                 if (!await this.checkFromAdmin(m)) {
                     break;
                 }
-                const conflict = cmd === "verbose" ? "quiet" : "verbose";
                 switch (arg) {
                     case "on":
                         await this.setKey(cmd, "true");
-                        await this.delKey(conflict);
+                        const conflict = {
+                            "verbose": "quiet",
+                            "quiet": "verbose",
+                            "debug": undefined,
+                        }[cmd];
+                        if (conflict !== undefined) {
+                            await this.delKey(conflict);
+                        }
                         await this.send(await this.format(`${cmd}.on`), m.message_id);
                         break;
                     case "off":
@@ -403,7 +410,7 @@ export default class Group {
         let e;
         while (true) {
             try {
-                e = await bot.getChatMember(this.id, user);
+                e = await bot.getChatMember(this.id, user, await this.existsKey("debug"));
                 break;
             } catch { }
         }
@@ -445,7 +452,7 @@ export default class Group {
                     res += (await this.getTimeout()).toString();
                     break;
                 default:
-                    // no-op;
+                // no-op;
             }
         }
         return res;
@@ -492,7 +499,7 @@ export default class Group {
     }
 
     private async send(html: string, reply?: number): Promise<number> {
-        return bot.send(this.id, html, reply);
+        return bot.send(this.id, html, await this.existsKey("debug"), reply);
     }
 
     private async delMsg(msg: number): Promise<boolean> {

@@ -76,7 +76,7 @@ export function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: st
     return [c, text.slice(p + 1).trim()];
 }
 
-export async function send(chat: number, html: string, reply?: number): Promise<number> {
+export async function send(chat: number, html: string, debug: boolean, reply?: number): Promise<number> {
     const begin = Date.now();
     let m: TelegramBotAPI.Message;
     try {
@@ -87,11 +87,15 @@ export async function send(chat: number, html: string, reply?: number): Promise<
         });
     } catch (err) {
         const dur_ms = Date.now() - begin;
-        botLogger.warn("send()", { chat, html, reply, ok: false, dur_ms, err });
+        botLogger.warn("send()", { chat, reply, ok: false, dur_ms, err });
         return 0;
     }
     const dur_ms = Date.now() - begin;
-    botLogger.verbose("send()", { chat, html, reply, ok: true, dur_ms, msg: m.message_id });
+    if (!debug) {
+        botLogger.verbose("send()", { chat, reply, ok: true, dur_ms, msg: m.message_id });
+    } else {
+        botLogger.verbose("send()", { chat, html, reply, ok: true, dur_ms, msg: m.message_id, msg_detail: m });
+    }
     return m.message_id;
 }
 
@@ -159,7 +163,7 @@ export async function unban(chat: number, user: number): Promise<boolean> {
     return unbanned;
 }
 
-export async function getChatMember(chat: number, user: number): Promise<TelegramBotAPI.ChatMember | undefined> {
+export async function getChatMember(chat: number, user: number, debug: boolean): Promise<TelegramBotAPI.ChatMember | undefined> {
     const begin = Date.now();
     let member: TelegramBotAPI.ChatMember;
     try {
@@ -176,7 +180,11 @@ export async function getChatMember(chat: number, user: number): Promise<Telegra
     const dur_ms = Date.now() - begin;
     const member_status = member.status;
     const member_can_restrict_members = member.can_restrict_members;
-    botLogger.verbose("getmember()", { chat, user, dur_ms, ok: true, member_status, member_can_restrict_members });
+    if (!debug) {
+        botLogger.verbose("getmember()", { chat, user, dur_ms, ok: true, member_status, member_can_restrict_members });
+    } else {
+        botLogger.verbose("getmember()", { chat, user, dur_ms, ok: true, member_status, member_can_restrict_members, member_detail: member });
+    }
     return member;
 }
 
