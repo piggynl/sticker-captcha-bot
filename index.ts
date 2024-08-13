@@ -4,8 +4,11 @@ import * as bot from "./bot.js";
 import * as config from "./config.js";
 import Group from "./group.js";
 import * as redis from "./redis.js";
+import { logger } from "./log.js";
 
 Error.stackTraceLimit = Infinity;
+
+const botLogger = logger.child({ scope: "bot" });
 
 async function sleep(time: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, time));
@@ -28,10 +31,12 @@ async function sleep(time: number): Promise<void> {
 
             for (const upd of updates) {
                 lastUpdateID = upd.update_id;
-                const m = upd.message;
-                const g = Group.get(m?.chat.id as number);
-                g.handleMessage(m as any).catch(() => undefined);
+                const m = upd.message!;
+                const g = Group.get(m.chat.id);
+                g.pushMessage(m);
             }
+
+            botLogger.info("getupdate()", { last_update_id: lastUpdateID });
         } catch {}
     }
 })();

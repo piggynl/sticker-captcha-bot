@@ -34,21 +34,49 @@ export default class Group {
 
     public readonly id: number;
 
+    private processing: boolean;
+    private readonly messageQueue: TelegramBot.Message[];
+
     private readonly resolvers: Map<number, (passed: boolean) => void>;
 
     private readonly mutex: Mutex;
 
     public constructor(id: number) {
         this.id = id;
+        this.processing = false;
+        this.messageQueue = [];
         this.resolvers = new Map();
         this.mutex = new Mutex();
     }
 
-    public async handleMessage(m: TelegramBot.Message): Promise<void> {
+    public pushMessage(m: TelegramBot.Message): void {
+        groupLogger.debug("pushmsg()", { chat: this.id, msg: m.message_id });
+        this.messageQueue.push(m);
+        this.processMessages().catch((e) => { })
+    }
+
+    private async processMessages(): Promise<void> {
+        if (this.processing) {
+            return;
+        }
+        this.processing = true;
+        groupLogger.debug("processmsg()", { chat: this.id, status: "start" });
+        while (true) {
+            const newMessage = this.messageQueue.shift();
+            if (newMessage === undefined) {
+                break;
+            }
+            await this.handleMessage(newMessage);
+        }
+        groupLogger.debug("processmsg()", { chat: this.id, status: "stop" });
+        this.processing = false;
+    }
+
+    private async handleMessage(m: TelegramBot.Message): Promise<void> {
         if (!await this.existsKey("debug")) {
-            botLogger.verbose("update", { chat: m.chat.id, msg: m.message_id });
+            groupLogger.info("handlemsg()", { chat: m.chat.id, msg: m.message_id });
         } else {
-            botLogger.verbose("update", { chat: m.chat.id, msg: m.message_id, msg_detail: m });
+            groupLogger.info("handlemsg()", { chat: m.chat.id, msg: m.message_id, msg_detail: m });
         }
         for (const u of (m.new_chat_members || [])) {
             await this.delKey(`user:${u.id}:role`);
