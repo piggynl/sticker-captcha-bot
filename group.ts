@@ -45,7 +45,11 @@ export default class Group {
     }
 
     public async handleMessage(m: TelegramBot.Message): Promise<void> {
-        botLogger.verbose("update", { chat: m.chat.id, msg: m.message_id });
+        if (!await this.existsKey("debug")) {
+            botLogger.verbose("update", { chat: m.chat.id, msg: m.message_id });
+        } else {
+            botLogger.verbose("update", { chat: m.chat.id, msg: m.message_id, msg_detail: m });
+        }
         for (const u of (m.new_chat_members || [])) {
             await this.delKey(`user:${u.id}:role`);
             if (u.id === bot.getMe().id) {
