@@ -5,7 +5,6 @@ import TelegramBot from "node-telegram-bot-api";
 import * as bot from "./bot.js";
 import * as config from "./config.js";
 import * as i18n from "./i18n/index.js";
-import Mutex from "./mutex.js";
 import * as redis from "./redis.js";
 import { logger } from "./log.js";
 
@@ -39,14 +38,11 @@ export default class Group {
 
     private readonly resolvers: Map<number, (passed: boolean) => void>;
 
-    private readonly mutex: Mutex;
-
     public constructor(id: number) {
         this.id = id;
         this.processing = false;
         this.messageQueue = [];
         this.resolvers = new Map();
-        this.mutex = new Mutex();
     }
 
     public pushMessage(m: TelegramBot.Message): void {
