@@ -114,11 +114,11 @@ export default class Group {
 
     private async onJoin(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
         if (await this.existsKey(`user:${user.id}:pending`)) {
-            groupLogger.info("onjoin", { chat: this.id, msg: msg.message_id, user: user.id, status: "dup" });
+            groupLogger.info("onjoin()", { chat: this.id, msg: msg.message_id, user: user.id, status: "dup" });
             return;
         }
 
-        groupLogger.info("onjoin", { chat: this.id, msg: msg.message_id, user: user.id, status: "start" });
+        groupLogger.info("onjoin()", { chat: this.id, msg: msg.message_id, user: user.id, status: "start" });
         await this.setKey(`user:${user.id}:pending`, "true");
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
 
@@ -157,7 +157,7 @@ export default class Group {
         if (!await this.existsKey(`user:${user.id}:pending`)) {
             return;
         }
-        groupLogger.info("onpass", { chat: this.id, msg: msg.message_id, user: user.id });
+        groupLogger.info("onpass()", { chat: this.id, msg: msg.message_id, user: user.id });
         await this.delKey(`user:${user.id}:pending`);
         const resolve = this.resolvers.get(user.id);
         if (resolve !== undefined) {
@@ -174,7 +174,7 @@ export default class Group {
         if (!await this.existsKey(`user:${user.id}:pending`)) {
             return;
         }
-        groupLogger.info("onpass", { chat: this.id, user: user.id });
+        groupLogger.info("onfail()", { chat: this.id, user: user.id });
         await this.delKey(`user:${user.id}:pending`);
         const resolve = this.resolvers.get(user.id);
         if (resolve !== undefined) {
