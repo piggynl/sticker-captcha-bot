@@ -21,7 +21,7 @@ export async function ping(): Promise<boolean> {
     try {
         r = await client.ping();
     } catch (err) {
-        redisLogger.error("ping()", { ok: false, error: err });
+        redisLogger.error("ping()", { ok: false, err });
         return false;
     }
     redisLogger.debug("ping()", { ok: true });
