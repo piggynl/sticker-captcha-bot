@@ -122,35 +122,37 @@ export default class Group {
         await this.setKey(`user:${user.id}:pending`, "true");
         const h = await this.send(await this.render(await this.getTemplate("onjoin"), user), msg.message_id);
 
-        const passed = await Promise.race([
-            this.sleep(false),
-            new Promise<boolean>(async (resolve) => {
-                const resolver = (passed: boolean): void => {
-                    this.resolvers.delete(user.id);
-                    resolve(passed);
-                };
-                this.resolvers.set(user.id, resolver);
-                if (user.id === bot.getMe().id) {
-                    try {
-                        const s = "CAACAgUAAxkBAAEI_IFgKqYpeH28bSvB_qd3ybC5vS-RxwACsgADVl_YH824--1Q953HHgQ";
-                        const w = await bot.getAPI().sendSticker(this.id, s);
-                        await this.onPass(w, w.from as TelegramBot.User);
-                    } catch { }
-                }
-            }),
-        ]);
+        (async () => {
+            const passed = await Promise.race([
+                this.sleep(false),
+                new Promise<boolean>(async (resolve) => {
+                    const resolver = (passed: boolean): void => {
+                        this.resolvers.delete(user.id);
+                        resolve(passed);
+                    };
+                    this.resolvers.set(user.id, resolver);
+                    if (user.id === bot.getMe().id) {
+                        try {
+                            const s = "CAACAgUAAxkBAAEI_IFgKqYpeH28bSvB_qd3ybC5vS-RxwACsgADVl_YH824--1Q953HHgQ";
+                            const w = await bot.getAPI().sendSticker(this.id, s);
+                            await this.onPass(w, w.from as TelegramBot.User);
+                        } catch { }
+                    }
+                }),
+            ]);
 
-        if (!await this.existsKey("verbose")) {
-            await this.delMsg(h);
-        }
-        if (passed) {
-            return;
-        }
+            if (!await this.existsKey("verbose")) {
+                await this.delMsg(h);
+            }
+            if (passed) {
+                return;
+            }
 
-        if (!await this.existsKey("verbose")) {
-            await this.delMsg(msg.message_id);
-        }
-        await this.onFail(user);
+            if (!await this.existsKey("verbose")) {
+                await this.delMsg(msg.message_id);
+            }
+            await this.onFail(user);
+        })();
     }
 
     private async onPass(msg: TelegramBot.Message, user: TelegramBot.User): Promise<void> {
