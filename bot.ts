@@ -53,9 +53,9 @@ export function parseCommand(m: TelegramBotAPI.Message): [cmd?: string, arg?: st
         return [];
     }
     let c: string | undefined;
-    for (const err of (m.entities || [])) {
-        if (err.type === "bot_command" && err.offset === 0) {
-            c = text.slice(1, err.length);
+    for (const entity of (m.entities || [])) {
+        if (entity.type === "bot_command" && entity.offset === 0) {
+            c = text.slice(1, entity.length);
         }
     }
     if (c === undefined) {
