@@ -34,14 +34,14 @@ async function sleep(time: number): Promise<void> {
             });
         } catch (err) {
             const dur_ms = Date.now() - begin;
-            botLogger.info("getupdates()", { offset, dur_ms, ok: false, err });
+            botLogger.verbose("getupdates()", { offset, dur_ms, ok: false, err });
             continue;
         }
         const dur_ms = Date.now() - begin;
         if (updates.length > 0) {
             last_update_id = updates[updates.length - 1].update_id;
         }
-        botLogger.info("getupdates()", { offset, dur_ms, ok: true, last_update_id: last_update_id });
+        botLogger.verbose("getupdates()", { offset, dur_ms, ok: true, last_update_id: last_update_id });
 
         for (const upd of updates) {
             const m = upd.message!;
